@@ -62,9 +62,10 @@
   <section id="authLoading" class="p-6" role="status">Restoring your saved session…</section>
   <section id="login" class="hidden p-6 space-y-4">
     <h2 class="font-bold text-xl">Welcome back</h2>
-    <p class="text-slate-500 text-sm">Sign in with your Worker ID and assigned team.</p>
+    <p class="text-slate-500 text-sm">Sign in using your approved employee email account.</p>
+    <p class="muted" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:12px">Worker ID and team-based sign-in are not active yet. Use email sign-in below until the secure login service is deployed.</p>
 
-    <form id="workerLoginForm" class="grid gap-4">
+    <form id="workerLoginForm" class="hidden grid gap-4">
       <label class="block text-sm font-semibold">Worker ID
         <input id="workerId" required autocomplete="username" class="mt-2 w-full border rounded-xl p-3 outline-indigo-500" placeholder="Enter Worker ID">
       </label>
@@ -77,8 +78,8 @@
       <button id="workerSignIn" type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl p-3 w-full font-bold">Secure Login</button>
     </form>
 
-    <details>
-      <summary class="cursor-pointer text-sm text-indigo-700">Use existing email sign-in</summary>
+    <details open>
+      <summary class="cursor-pointer text-sm text-indigo-700">Employee email sign-in</summary>
       <label class="block text-sm font-semibold mt-3">Email
         <input id="email" type="email" autocomplete="username" class="mt-2 w-full border rounded-xl p-3 outline-indigo-500" placeholder="employee@company.com">
       </label>
