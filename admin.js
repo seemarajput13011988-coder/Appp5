@@ -419,19 +419,51 @@ function renderAnnouncementList() {
   if (!Object.keys(announcementCache).length) box.textContent='No announcements published.';
 }
 
+function displayAdminMessages(data, uid) {
+  const box = $('adminMessages');
+  box.replaceChildren();
+  const messages = Object.values(data).sort((a,b) => (a.createdAt || 0) - (b.createdAt || 0));
+  if (!messages.length) {
+    const empty = document.createElement('p'); empty.className = 'muted';
+    empty.textContent = 'No messages yet. Send the first message to this employee.';
+    box.append(empty); return;
+  }
+  for (const item of messages) {
+    const mine = item.senderRole === 'admin';
+    const bubble = document.createElement('article');
+    bubble.className = 'chat-message' + (mine ? ' mine' : '');
+    const meta = document.createElement('div'); meta.className = 'chat-meta';
+    const when = typeof item.createdAt === 'number' ? ' · ' + new Date(item.createdAt).toLocaleString('en-IN') : '';
+    meta.textContent = (mine ? 'You' : employees[uid]?.name || 'Employee') + when;
+    const body = document.createElement('p'); body.textContent = item.text || '';
+    bubble.append(meta,body); box.append(bubble);
+  }
+  box.scrollTop = box.scrollHeight;
+}
 $('messageEmployee').onchange = () => {
   offSelectedMessages();
-  const uid = $('messageEmployee').value; $('adminMessages').replaceChildren();
-  if (!uid) return;
-  offSelectedMessages = onValue(ref(db, `messages/${uid}`), snap => {
-    const box=$('adminMessages'); box.replaceChildren();
-    for (const item of Object.values(snap.val() || {}).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0))) { const p=document.createElement('p'); p.textContent=`${item.senderRole === 'admin' ? 'Admin' : employees[uid]?.name || 'Employee'}: ${item.text}`; box.append(p); }
-  }, databaseError);
+  const uid = $('messageEmployee').value;
+  $('adminMessages').replaceChildren();
+  if (!uid) { $('adminMessages').textContent = 'Select an employee to view messages.'; return; }
+  offSelectedMessages = onValue(ref(db, `messages/${uid}`),
+    snap => displayAdminMessages(snap.val() || {}, uid),
+    error => { $('adminMessages').textContent = 'Unable to load messages. Check Firebase access.'; databaseError(error, 'employee messages'); });
 };
 $('adminMessageForm').onsubmit = async event => {
-  event.preventDefault(); const uid=$('messageEmployee').value; if (!uid) return;
-  try { await set(push(ref(db,`messages/${uid}`)), { text:$('adminMessageText').value.trim(), senderUid:auth.currentUser.uid, senderRole:'admin', createdAt:serverTimestamp() }); $('adminMessageText').value=''; await writeAudit('message.sent', uid); }
-  catch { $('actionError').textContent='Could not send message.'; }
+  event.preventDefault();
+  const uid = $('messageEmployee').value;
+  const message = $('adminMessageText').value.trim();
+  if (!uid || !employees[uid]) { $('actionError').textContent = 'Select an employee before sending.'; return; }
+  if (!message) return;
+  const button = $('adminMessageForm').querySelector('button');
+  button.disabled = true;
+  try {
+    await set(push(ref(db,`messages/${uid}`)), { text:message, senderUid:auth.currentUser.uid, senderRole:'admin', createdAt:serverTimestamp() });
+    $('adminMessageText').value = '';
+    $('actionError').textContent = '';
+    try { await writeAudit('message.sent', uid); } catch (auditError) { databaseError(auditError, 'message audit'); }
+  } catch (error) { databaseError(error, 'send employee message'); }
+  finally { button.disabled = false; }
 };
 
 function csvCell(value) { const text = value == null ? '' : String(value); return `"${text.replaceAll('"','""')}"`; }
