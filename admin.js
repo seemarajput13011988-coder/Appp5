@@ -308,10 +308,10 @@ function renderAudit() { const box=$('auditList'); box.replaceChildren(); for (c
 function databaseError(error, section = 'data') {
   const code = String(error?.code || 'unknown').replace(/^database\//, '');
   if (code.toUpperCase().includes('PERMISSION_DENIED')) {
-    $('actionError').textContent = \`Firebase denied access to \${section}. Check the deployed database rules for this data path and confirm your account has the admin role.\`;
+    $('actionError').textContent = 'Firebase denied access to ' + section + '. Check the deployed database rules for this data path and confirm your account has the admin role.';
     return;
   }
-  $('actionError').textContent = \`Could not load \${section} (\${code}). Check the network connection and Firebase status.\`;
+  $('actionError').textContent = 'Could not load ' + section + ' (' + code + '). Check the network connection and Firebase status.';
 }
 
 function renderTaskReviews() {
