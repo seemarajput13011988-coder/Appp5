@@ -214,7 +214,6 @@ onAuthStateChanged(auth, async user => {
     $('authLoading').classList.add('hidden');
     $('login').classList.remove('hidden');
     $('workspace').classList.add('hidden');
-    loadLoginTeams();
     return;
   }
 
@@ -333,7 +332,8 @@ onAuthStateChanged(auth, async user => {
 });
 
 $('startShift').onclick = async () => {
-  if (!userId || shiftActive) return;
+  if (!userId || shiftActive || $('startShift').disabled) return;
+  $('startShift').disabled = true;
 
   try {
     $('actionError').textContent = '';
@@ -347,7 +347,9 @@ $('startShift').onclick = async () => {
     });
 
   } catch (e) {
-    $('actionError').textContent = 'Could not start shift.';
+    $('actionError').textContent = 'Could not start shift. Check connection and access.';
+  } finally {
+    if (!shiftActive) $('startShift').disabled = false;
   }
 };
 
