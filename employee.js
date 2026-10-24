@@ -309,6 +309,22 @@ onAuthStateChanged(auth, async user => {
     }
 
     userId = user.uid;
+    const approvalRef = ref(db, `accessRequests/${user.uid}`);
+    offApproval = onValue(approvalRef, snap => {
+      const request = snap.val();
+      if (!request) return;
+      const state = request.state || 'pending';
+      $('workerApprovalTracker').classList.remove('hidden');
+      $('workerApprovalBadge').textContent = state === 'approved' ? 'Approved' : state === 'rejected' ? 'Declined' : 'Pending review';
+      $('workerApprovalBadge').className = 'approval-badge' + (state === 'pending' ? ' pending' : state === 'rejected' ? ' rejected' : '');
+      $('workerApprovalStep1').className = 'approval-step done';
+      $('workerApprovalStep2').className = 'approval-step ' + (state === 'pending' ? 'current' : state === 'approved' ? 'done' : '');
+      $('workerApprovalStep3').className = 'approval-step ' + (state === 'approved' ? 'done' : '');
+      $('workerApprovalNote').textContent = state === 'approved' ? 'Your account is approved and your employee workspace is active.' : state === 'pending' ? 'Your request is waiting for administrator review.' : 'Your request was declined. Contact your administrator.';
+    }, error => {
+      $('workerApprovalTracker').classList.remove('hidden');
+      $('workerApprovalNote').textContent = 'Could not refresh approval status. Check your internet connection.';
+    });
     $('userName').textContent = profile.name || user.email;
 
     $('login').classList.add('hidden');
