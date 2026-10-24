@@ -266,14 +266,12 @@ function renderGpsLocations() {
     coordinates.className = 'text-sm mt-2';
     coordinates.textContent = lat.toFixed(6) + ', ' + lon.toFixed(6);
     const link = document.createElement('a');
-    link.href = 'https://www.openstreetmap.org/?mlat=' + encodeURIComponent(lat) + '&mlon=' + encodeURIComponent(lon) + '#map=17/' + encodeURIComponent(lat) + '/' + encodeURIComponent(lon);
+    link.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(lat + ',' + lon);
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
-    link.textContent = 'Open in map';
+    link.textContent = 'Open in Google Maps';
     const map = document.createElement('iframe');
-    const delta = 0.008;
-    const bbox = [lon-delta,lat-delta,lon+delta,lat+delta].join('%2C');
-    map.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik&marker=' + encodeURIComponent(lat) + '%2C' + encodeURIComponent(lon);
+    map.src = 'https://maps.google.com/maps?q=' + encodeURIComponent(lat + ',' + lon) + '&z=16&output=embed';
     map.loading = 'lazy';
     map.title = 'Recorded location for ' + item.name;
     map.referrerPolicy = 'no-referrer';
