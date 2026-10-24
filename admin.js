@@ -183,9 +183,15 @@ onAuthStateChanged(auth, async user => {
   }
   try {
     const profileSnapshot = await get(ref(db, `profiles/${user.uid}`));
-    if (profileSnapshot.val()?.role !== 'admin' || profileSnapshot.val()?.active === false || profileSnapshot.val()?.disabled === true) {
+    if (!profileSnapshot.exists()) {
       await signOut(auth);
-      $('loginError').textContent = 'Admin access required. This account may be inactive or not assigned the admin role.';
+      $('loginError').textContent = 'Your Firebase Authentication account signed in, but its database profile is missing. In Firebase Console, find your own account under Authentication > Users and confirm a matching profiles/<UID> record exists with role set to "admin".';
+      return;
+    }
+    const profile = profileSnapshot.val();
+    if (profile?.role !== 'admin' || profile?.active === false || profile?.disabled === true) {
+      await signOut(auth);
+      $('loginError').textContent = 'Your database profile exists, but admin access is not enabled. Confirm role is "admin" and the profile is active for your own administrator account.';
       return;
     }
     $('login').classList.add('hidden');
