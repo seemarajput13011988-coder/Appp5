@@ -1,0 +1,171 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>K&B Workforce | Admin</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <style>
+    .hidden{display:none!important}:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#0f172a;background:#f1f5f9;-webkit-text-size-adjust:100%}*{box-sizing:border-box}body{margin:0;min-height:100vh}button,input,textarea,select{font:inherit}button{cursor:pointer;min-height:44px}button:disabled{opacity:.6;cursor:wait}input,textarea,select{font-size:16px}#login{min-height:100vh;display:grid;place-items:center;padding:20px}#login>div{background:white;border:1px solid #e2e8f0;border-radius:24px;box-shadow:0 16px 50px #0f172a12;padding:clamp(22px,5vw,36px);width:min(100%,440px);display:grid;gap:14px}.brand{color:#4f46e5;font-size:.75rem;font-weight:800;letter-spacing:.14em}h1,h2,h3,p{margin-top:0}input,textarea,select{width:100%;padding:12px 14px;border:1px solid #cbd5e1;border-radius:12px;background:white;color:#0f172a}input:focus,textarea:focus,select:focus{outline:3px solid #6366f133;border-color:#6366f1}button{border:0;border-radius:12px;padding:11px 16px;background:#4f46e5;color:white;font-weight:700}.muted{color:#64748b}.error{color:#be123c;min-height:1.2em}#dashboard{min-height:100vh;display:flex;flex-direction:column}aside{background:#0b1220;color:white;padding:20px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}aside h2{margin:4px 0}nav{display:flex;gap:8px;overflow:auto;width:100%;margin-top:8px}nav button{flex:1;white-space:nowrap;background:transparent;color:#cbd5e1;text-align:left}nav button:hover,nav button[aria-current="page"]{background:#4338ca;color:white}#signOut{background:transparent;color:#cbd5e1}#dashboard main{width:100%;max-width:1280px;padding:clamp(18px,4vw,40px);margin:0 auto}.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.card,.surface{background:white;border:1px solid #e2e8f0;border-radius:18px;padding:20px}.page{margin-top:24px}.list-row{border-bottom:1px solid #e2e8f0;padding:13px 0;overflow-wrap:anywhere}.task-card{border:1px solid #e2e8f0;border-radius:14px;padding:16px;margin:12px 0;overflow-wrap:anywhere}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.form-grid h2,.form-grid textarea,.form-grid button{grid-column:1/-1}@media(min-width:800px){#dashboard{flex-direction:row}aside{width:250px;min-height:100vh;display:block;padding:28px}nav{display:grid;margin-top:34px}nav button{width:100%}#signOut{margin-top:30px}}@media(max-width:600px){.grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.form-grid>*{grid-column:1/-1}.surface,.card{padding:16px}nav button{font-size:.85rem;padding:9px}}
+  </style>
+  <style>
+    #dashboard main>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}#dashboard main>div:first-child h1{margin:4px 0;font-size:clamp(1.65rem,4vw,2rem)}.page>div,.page form{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:20px}.page .grid>div{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:20px}.page .grid strong{font-size:1.8rem}#taskForm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#taskForm h2,#taskForm textarea,#taskForm button{grid-column:1/-1}#employeeList>div,#attendanceList>div{border-bottom:1px solid #e2e8f0;padding:12px 0;overflow-wrap:anywhere}#taskList article{border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin:12px 0;overflow-wrap:anywhere}@media(max-width:600px){#taskForm{grid-template-columns:1fr}#taskForm>*{grid-column:1/-1}.page>div,.page form{padding:16px}}
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900">
+
+<section id="login" class="min-h-screen grid place-items-center p-5">
+  <div>
+    <div class="font-black tracking-wider text-indigo-600">K&B NET SERVICE</div>
+    <h1 class="text-2xl font-extrabold">Admin Command Center</h1>
+    <p class="text-slate-500 text-sm">Authorized administrators only.</p>
+    <input id="email" type="email" autocomplete="username" value="seemarajput13011988@gmail.com" placeholder="Admin email" class="w-full border rounded-xl p-3">
+    <input id="password" type="password" autocomplete="current-password" placeholder="Password" class="w-full border rounded-xl p-3">
+    <button id="signIn" type="button" class="w-full bg-indigo-600 text-white rounded-xl p-3 font-semibold">Secure sign in</button>
+    <button id="passwordReset" type="button" class="w-full border rounded-xl p-3">Reset password</button>
+    <p id="loginError" role="alert" class="text-rose-600 text-sm"></p>
+  </div>
+</section>
+
+<div id="dashboard" class="hidden min-h-screen md:flex">
+  <aside class="bg-slate-950 text-white w-full md:w-64 p-6 md:min-h-screen">
+    <div class="text-indigo-300 text-xs font-extrabold tracking-widest">K&B NET SERVICE</div>
+    <h2 class="text-xl font-bold mt-2">Operations</h2>
+
+    <nav class="mt-10 space-y-2">
+      <button data-page="overview" class="nav w-full text-left p-3 rounded-xl bg-indigo-600">▦ Overview</button>
+      <button data-page="employees" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">♙ Employees</button>
+      <button data-page="tasks" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">☷ Tasks</button>
+      <button data-page="attendance" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">◷ Attendance</button>
+      <button data-page="access" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Access requests</button>
+      <button data-page="tickets" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Customer tickets</button>
+      <button data-page="announcements" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Announcements</button>
+      <button data-page="messages" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Messages</button>
+      <button data-page="reports" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Exports & audit</button>
+    </nav>
+
+    <button id="signOut" class="mt-10 text-sm text-slate-300">Sign out</button>
+  </aside>
+
+  <main class="flex-1 p-5 md:p-9 max-w-7xl">
+    <div class="flex flex-wrap justify-between gap-4 items-center">
+      <div>
+        <p class="text-indigo-600 text-sm font-semibold">WORKFORCE MANAGEMENT</p>
+        <h1 id="pageTitle" class="text-3xl font-extrabold mt-1">Overview</h1>
+      </div>
+      <div id="adminEmail" class="text-sm text-slate-500">Admin session</div>
+    </div>
+
+    <p id="actionError" role="alert" class="text-rose-600 text-sm mt-4"></p>
+    <p class="muted">Admin access is verified through Firebase Authentication and your trusted admin profile.</p>
+
+    <section id="overview" class="page mt-8">
+      <div class="grid sm:grid-cols-3 gap-4">
+        <div class="bg-white rounded-2xl p-6 border">
+          <p class="text-slate-500 text-sm">Employees</p>
+          <strong id="employeeCount" class="text-3xl">—</strong>
+        </div>
+        <div class="bg-white rounded-2xl p-6 border">
+          <p class="text-slate-500 text-sm">Tasks</p>
+          <strong id="taskCount" class="text-3xl">—</strong>
+        </div>
+        <div class="bg-white rounded-2xl p-6 border">
+          <p class="text-slate-500 text-sm">Active shifts</p>
+          <strong id="activeCount" class="text-3xl">—</strong>
+        </div>
+        <div class="bg-white rounded-2xl p-6 border">
+          <p class="text-slate-500 text-sm">Customer tickets</p>
+          <strong id="ticketCount" class="text-3xl">—</strong>
+        </div>
+      </div>
+
+      <div class="bg-white border rounded-2xl p-6 mt-6">
+        <h3 class="font-bold">System overview</h3>
+        <p class="text-sm text-slate-500 mt-2">
+          Live Firebase summaries. GPS is collected only during permitted foreground actions.
+        </p>
+      </div>
+    </section>
+
+    <section id="employees" class="page hidden mt-8">
+      <div class="bg-white border rounded-2xl p-6">
+        <h2 class="font-bold">Registered employees</h2>
+        <div id="employeeList" class="mt-4 text-sm"></div>
+      </div>
+    </section>
+
+    <section id="tasks" class="page hidden mt-8 space-y-5">
+      <form id="taskForm" class="bg-white border rounded-2xl p-6 grid md:grid-cols-2 gap-3">
+        <h2 class="font-bold md:col-span-2">Create task</h2>
+
+        <input id="taskTitle" required maxlength="120" placeholder="Task title" class="border rounded-xl p-3">
+
+        <select id="assignee" required class="border rounded-xl p-3">
+          <option value="">Select employee</option>
+        </select>
+
+        <textarea id="taskDescription" maxlength="1000" placeholder="Description" class="border rounded-xl p-3 md:col-span-2"></textarea>
+
+        <button class="bg-indigo-600 text-white rounded-xl p-3 font-semibold md:col-span-2">
+          Assign task
+        </button>
+      </form>
+
+      <div class="bg-white border rounded-2xl p-6">
+        <h2 class="font-bold">Task list</h2>
+        <div id="taskList" class="mt-4 text-sm"></div>
+        <p id="reviewFeedback" role="status" class="text-sm text-indigo-700 mt-3"></p>
+      </div>
+    </section>
+
+    <section id="attendance" class="page hidden mt-8">
+      <div class="bg-white border rounded-2xl p-6">
+        <h2 class="font-bold">Shift records</h2>
+        <div id="attendanceList" class="mt-4 text-sm"></div>
+      </div>
+    </section>
+
+    <section id="access" class="page hidden mt-8">
+      <div class="bg-white border rounded-2xl p-6">
+        <h2 class="font-bold">Employee access requests</h2>
+        <p class="muted">Approve Google accounts to create their employee profile.</p>
+        <div id="accessRequests" class="mt-4 text-sm"></div>
+      </div>
+    </section>
+
+    <section id="tickets" class="page hidden mt-8">
+      <form id="adminTicketForm" class="bg-white border rounded-2xl p-6 grid gap-3">
+        <h2 class="font-bold">Create and assign a ticket</h2>
+        <input id="adminTicketCustomer" required maxlength="120" placeholder="Customer name">
+        <input id="adminTicketContact" maxlength="40" placeholder="Contact number">
+        <input id="adminTicketAddress" maxlength="250" placeholder="Service address">
+        <select id="adminTicketCategory" required><option value="">Category</option><option>Connection issue</option><option>Fiber fault</option><option>Router / ONT</option><option>Installation</option><option>Other</option></select>
+        <select id="adminTicketAssignee" required><option value="">Assign employee</option></select>
+        <select id="adminTicketPriority"><option>Normal</option><option>High</option><option>Urgent</option></select>
+        <textarea id="adminTicketDescription" required maxlength="1000" placeholder="Complaint description"></textarea>
+        <button>Create ticket</button>
+      </form>
+      <div class="bg-white border rounded-2xl p-6 mt-5"><h2 class="font-bold">Ticket queue</h2><div id="ticketList" class="mt-3"></div></div>
+    </section>
+
+    <section id="announcements" class="page hidden mt-8">
+      <form id="announcementForm" class="bg-white border rounded-2xl p-6 grid gap-3"><h2 class="font-bold">Publish announcement</h2><input id="announcementTitle" required maxlength="120" placeholder="Title"><textarea id="announcementBody" required maxlength="2000" placeholder="Announcement"></textarea><button>Publish</button></form>
+      <div id="announcementList" class="bg-white border rounded-2xl p-6 mt-5"></div>
+    </section>
+
+    <section id="messages" class="page hidden mt-8">
+      <div class="bg-white border rounded-2xl p-6"><h2 class="font-bold">Employee messages</h2><label>Employee<select id="messageEmployee"><option value="">Select employee</option></select></label><div id="adminMessages" class="mt-4"></div><form id="adminMessageForm" class="flex gap-2 mt-3"><input id="adminMessageText" required maxlength="1000" placeholder="Reply"><button>Send</button></form></div>
+    </section>
+
+    <section id="reports" class="page hidden mt-8">
+      <div class="bg-white border rounded-2xl p-6"><h2 class="font-bold">CSV exports</h2><div class="flex flex-wrap gap-2 mt-3"><button data-export="tasks">Export tasks</button><button data-export="tickets">Export tickets</button><button data-export="shifts">Export shifts</button><button data-export="audit">Export audit log</button></div><h2 class="font-bold mt-6">Administrative audit history</h2><div id="auditList" class="mt-3"></div></div>
+    </section>
+
+  </main>
+</div>
+
+<script type="module" src="./admin.js"></script>
+<script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "profiles": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || (root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'))",
+        ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'"
+      }
+    },
+    "tasks": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && (root.child('profiles').child(auth.uid).child('role').val() === 'admin' || (query.orderByChild === 'assigneeUid' && query.equalTo === auth.uid))",
+      ".indexOn": ["assigneeUid"],
+      "$taskId": {
+        ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && data.child('assigneeUid').val() === auth.uid",
+        ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+        ".validate": "newData.hasChildren(['title','assigneeUid','status','createdAt','createdBy']) && newData.child('title').isString() && newData.child('assigneeUid').isString() && newData.child('createdBy').isString() && (!data.exists() || (newData.child('createdBy').val() === data.child('createdBy').val() && newData.child('createdAt').val() === data.child('createdAt').val())) && (data.exists() || newData.child('createdBy').val() === auth.uid)"
+      }
+    },
+    "shifts": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid && root.child('profiles').child(auth.uid).child('active').val() !== false",
+        "$shiftId": {
+          ".write": "auth != null && auth.uid === $uid && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'employee' && ((!data.exists() && newData.child('status').val() === 'active') || (data.exists() && data.child('status').val() === 'active' && newData.child('status').val() === 'ended' && newData.child('startedAt').val() === data.child('startedAt').val() && newData.child('endedAt').val() === now))",
+          ".validate": "newData.hasChildren(['status','startedAt']) && ((newData.child('status').val() === 'active' && newData.child('startedAt').val() === now && !newData.child('endedAt').exists()) || (data.exists() && data.child('status').val() === 'active' && newData.child('status').val() === 'ended' && newData.child('startedAt').val() === data.child('startedAt').val() && newData.child('endedAt').val() === now))"
+        }
+      }
+    },
+    "taskRequests": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid && root.child('profiles').child(auth.uid).child('active').val() !== false",
+        "$requestId": {
+          ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && ((!data.exists() && auth.uid === $uid && root.child('profiles').child(auth.uid).child('role').val() === 'employee' && newData.child('state').val() === 'pending' && newData.child('createdAt').val() === now && root.child('tasks').child(newData.child('taskId').val()).child('assigneeUid').val() === auth.uid) || (data.exists() && root.child('profiles').child(auth.uid).child('role').val() === 'admin' && newData.child('taskId').val() === data.child('taskId').val() && newData.child('kind').val() === data.child('kind').val() && newData.child('notes').val() === data.child('notes').val() && newData.child('createdAt').val() === data.child('createdAt').val() && data.child('state').val() === 'pending' && (newData.child('state').val() === 'approved' || newData.child('state').val() === 'rejected') && newData.child('reviewedBy').val() === auth.uid && newData.child('reviewedAt').val() === now))",
+          ".validate": "newData.hasChildren(['taskId','kind','notes','createdAt','state']) && newData.child('taskId').isString() && (newData.child('kind').val() === 'start' || newData.child('kind').val() === 'complete') && newData.child('notes').isString() && newData.child('notes').val().length <= 1000"
+        }
+      }
+    },
+    "accessRequests": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+      "$uid": {
+        ".read": "auth != null && ((auth.uid === $uid && root.child('profiles').child(auth.uid).child('active').val() !== false) || (root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'))",
+        ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && ((auth.uid === $uid && !data.exists() && newData.child('state').val() === 'pending' && newData.child('createdAt').val() === now) || root.child('profiles').child(auth.uid).child('role').val() === 'admin')",
+        ".validate": "newData.hasChildren(['email','name','state','createdAt']) && newData.child('email').isString() && newData.child('name').isString() && newData.child('state').isString() && (newData.child('state').val() === 'pending' || newData.child('state').val() === 'approved' || newData.child('state').val() === 'rejected')"
+      }
+    },
+    "tickets": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && (root.child('profiles').child(auth.uid).child('role').val() === 'admin' || (query.orderByChild === 'assignedTo' && query.equalTo === auth.uid))",
+      ".indexOn": ["assignedTo"],
+      "$ticketId": {
+        ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && (root.child('profiles').child(auth.uid).child('role').val() === 'admin' || (!data.exists() && newData.child('createdBy').val() === auth.uid && newData.child('assignedTo').val() === auth.uid) || (data.exists() && data.child('assignedTo').val() === auth.uid && newData.child('assignedTo').val() === data.child('assignedTo').val() && newData.child('createdBy').val() === data.child('createdBy').val() && newData.child('customerName').val() === data.child('customerName').val() && newData.child('contact').val() === data.child('contact').val() && newData.child('address').val() === data.child('address').val() && newData.child('category').val() === data.child('category').val() && newData.child('description').val() === data.child('description').val() && newData.child('priority').val() === data.child('priority').val() && newData.child('createdAt').val() === data.child('createdAt').val() && ((newData.child('status').val() === 'In Progress' && (data.child('status').val() === 'Open' || data.child('status').val() === 'Assigned')) || (newData.child('status').val() === 'Resolved' && data.child('status').val() === 'In Progress' && newData.child('resolvedAt').val() === now))))",
+        ".validate": "newData.hasChildren(['customerName','category','description','priority','status','assignedTo','createdBy','createdAt']) && newData.child('customerName').isString() && newData.child('category').isString() && newData.child('description').isString() && newData.child('priority').isString() && newData.child('assignedTo').isString() && newData.child('createdBy').isString() && newData.child('createdAt').isNumber() && (newData.child('status').val() === 'Open' || newData.child('status').val() === 'Assigned' || newData.child('status').val() === 'In Progress' || newData.child('status').val() === 'Waiting for Customer' || newData.child('status').val() === 'Escalated' || newData.child('status').val() === 'Resolved' || newData.child('status').val() === 'Closed')"
+      }
+    },
+    "announcements": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false",
+      "$announcementId": {
+        ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+        ".validate": "newData.hasChildren(['title','body','createdAt','createdBy']) && newData.child('title').isString() && newData.child('body').isString() && newData.child('createdAt').isNumber() && newData.child('createdBy').val() === auth.uid"
+      }
+    },
+    "messages": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+      "$employeeUid": {
+        ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && (auth.uid === $employeeUid || root.child('profiles').child(auth.uid).child('role').val() === 'admin')",
+        "$messageId": {
+          ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && ((auth.uid === $employeeUid && !data.exists() && newData.child('senderUid').val() === auth.uid && newData.child('senderRole').val() === 'employee') || (root.child('profiles').child(auth.uid).child('role').val() === 'admin' && newData.child('senderUid').val() === auth.uid && newData.child('senderRole').val() === 'admin'))",
+          ".validate": "newData.hasChildren(['text','senderUid','senderRole','createdAt']) && newData.child('text').isString() && newData.child('text').val().length <= 1000 && newData.child('senderUid').isString() && newData.child('createdAt').isNumber()"
+        }
+      }
+    },
+    "auditLogs": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+      "$eventId": {
+        ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin' && !data.exists() && newData.child('actor').val() === auth.uid",
+        ".validate": "newData.hasChildren(['actor','action','recordId','createdAt']) && newData.child('actor').isString() && newData.child('action').isString() && newData.child('recordId').isString() && newData.child('createdAt').isNumber()"
+      }
+    }
+  }
+}

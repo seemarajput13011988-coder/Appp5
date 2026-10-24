@@ -1,0 +1,125 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>K&B Workforce | Employee</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <style>
+    .hidden{display:none!important}:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#0f172a;background:#f1f5f9;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-text-size-adjust:100%}*{box-sizing:border-box}body{margin:0;min-height:100vh}button,input,textarea{font:inherit}button{cursor:pointer;min-height:44px}button:disabled{opacity:.6;cursor:wait}input,textarea{font-size:16px}main{width:min(100%,640px);min-height:100vh;margin:auto;background:#fff;box-shadow:0 12px 40px #0f172a12}header{padding:clamp(24px,7vw,42px) clamp(20px,6vw,32px) 28px;background:#0b1220;color:white;border-radius:0 0 28px 28px}header>div{display:flex;align-items:center;justify-content:space-between;gap:16px}header h1{font-size:clamp(1.5rem,5vw,2rem);margin:8px 0 0}header p{margin:4px 0;color:#94a3b8}.brand{font-size:.75rem;letter-spacing:.14em;color:#a5b4fc;font-weight:800}section{padding:24px clamp(18px,6vw,32px)}section#login{display:grid;gap:14px}section h2{margin:0;font-size:1.25rem}section p{line-height:1.5}label{display:grid;gap:7px;font-size:.9rem;font-weight:650}input,textarea{width:100%;padding:12px 14px;border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#0f172a;outline:none}input:focus,textarea:focus{border-color:#6366f1;box-shadow:0 0 0 3px #6366f133}button{border:0;border-radius:12px;padding:11px 16px;background:#4f46e5;color:white;font-weight:700}button:hover{background:#4338ca}.ghost{background:white;color:#4338ca;border:1px solid #c7d2fe}#workspace{display:grid;gap:18px}#workspace>div:first-child{display:flex;align-items:center;justify-content:space-between;gap:12px}.panel{border:1px solid #e2e8f0;border-radius:18px;padding:18px;background:white}.shift{background:#eef2ff;border-color:#c7d2fe}.actions{display:flex;gap:10px;margin-top:16px}.actions>*{flex:1}.muted{color:#64748b}.error{color:#be123c;min-height:1.25em}.task{border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin:12px 0;background:#f8fafc}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}@media(max-width:420px){.actions{flex-direction:column}section{padding-top:20px;padding-bottom:20px}}
+  </style>
+  <style>
+    #workspace>div:not(:first-child){border:1px solid #e2e8f0;border-radius:18px;padding:18px;background:#fff}#workspace>div:nth-child(2){background:#eef2ff;border-color:#c7d2fe}#workspace #tasks>article{border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin:12px 0;background:#f8fafc}#workspace>div:first-child p{margin:0;color:#64748b}#workspace>div:first-child h2{margin:3px 0}
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+<main class="max-w-lg mx-auto min-h-screen bg-white shadow-sm">
+  <header class="bg-slate-950 text-white px-6 pt-10 pb-8 rounded-b-3xl">
+    <div class="flex justify-between items-center">
+      <div>
+        <div class="text-xs tracking-widest text-indigo-300 font-bold">K&B NET SERVICE</div>
+        <h1 class="text-2xl font-extrabold mt-2">Field Workforce</h1>
+        <p class="text-slate-400 text-sm mt-1">Employee workspace</p>
+      </div>
+      <div class="bg-indigo-500/20 text-indigo-200 rounded-2xl p-3 text-2xl">◈</div>
+    </div>
+  </header>
+
+  <section id="authLoading" class="p-6" role="status">Restoring your saved session…</section>
+  <section id="login" class="hidden p-6 space-y-4">
+    <h2 class="font-bold text-xl">Welcome back</h2>
+    <p class="text-slate-500 text-sm">Sign in with your Worker ID and assigned team.</p>
+
+    <form id="workerLoginForm" class="grid gap-4">
+      <label class="block text-sm font-semibold">Worker ID
+        <input id="workerId" required autocomplete="username" class="mt-2 w-full border rounded-xl p-3 outline-indigo-500" placeholder="Enter Worker ID">
+      </label>
+      <label class="block text-sm font-semibold">Assigned Team Group
+        <select id="workerTeam" required disabled class="mt-2 w-full border rounded-xl p-3"><option value="">Loading teams…</option></select>
+      </label>
+      <label class="block text-sm font-semibold">Password
+        <input id="workerPassword" type="password" required autocomplete="current-password" class="mt-2 w-full border rounded-xl p-3 outline-indigo-500">
+      </label>
+      <button id="workerSignIn" type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl p-3 w-full font-bold">Secure Login</button>
+    </form>
+
+    <details>
+      <summary class="cursor-pointer text-sm text-indigo-700">Use existing email sign-in</summary>
+      <label class="block text-sm font-semibold mt-3">Email
+        <input id="email" type="email" autocomplete="username" class="mt-2 w-full border rounded-xl p-3 outline-indigo-500" placeholder="employee@company.com">
+      </label>
+      <label class="block text-sm font-semibold mt-3">Password
+        <input id="password" type="password" autocomplete="current-password" class="mt-2 w-full border rounded-xl p-3 outline-indigo-500">
+      </label>
+      <button id="signIn" type="button" class="bg-indigo-600 text-white rounded-xl p-3 w-full mt-3">Sign in with email</button>
+      <button id="resetPassword" type="button" class="ghost w-full mt-2">Reset password</button>
+    </details>
+    <button id="googleSignIn" type="button" class="ghost">Continue with Google</button>
+    <p class="muted">First-time users will need admin approval before accessing the workspace.</p>
+    <p id="loginError" role="alert" class="text-sm text-rose-600"></p>
+  </section>
+
+  <section id="workspace" class="hidden p-6 space-y-5">
+    <div class="flex justify-between items-center">
+      <div>
+        <p class="text-slate-500 text-sm">Signed in as</p>
+        <h2 id="userName" class="font-bold text-lg"></h2>
+      </div>
+      <button id="signOut" class="text-indigo-600 text-sm font-semibold">Sign out</button>
+    </div>
+
+    <div class="rounded-2xl border p-5 bg-indigo-50">
+      <p class="text-indigo-700 text-sm font-semibold">Shift status</p>
+      <h3 id="shiftStatus" class="text-2xl font-extrabold mt-1">Loading…</h3>
+      <p class="text-slate-500 text-xs mt-2">
+        GPS is requested only during shift actions and only recorded if you grant permission. This app does not track in the background.
+      </p>
+      <div class="flex gap-3 mt-4">
+        <button id="startShift" class="flex-1 bg-indigo-600 text-white rounded-xl p-3 font-semibold">Start shift</button>
+        <button id="endShift" class="flex-1 border border-indigo-200 bg-white text-indigo-700 rounded-xl p-3 font-semibold">End shift</button>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border p-5">
+      <h3 class="font-bold">My assigned tasks</h3>
+      <p class="muted">Starting or submitting work may attach a one-time location reading if permission is granted. Location is never tracked in the background.</p>
+      <div id="tasks" class="mt-3 text-sm text-slate-500">Loading…</div>
+      <p id="taskFeedback" role="status" class="text-sm text-indigo-700 mt-3"></p>
+    </div>
+
+    <div class="rounded-2xl border p-5">
+      <h3 class="font-bold">Customer tickets</h3>
+      <form id="ticketForm" class="grid gap-3 mt-3">
+        <p class="muted">If you grant location permission, the app attaches a one-time GPS reading to this ticket. No background tracking is performed.</p>
+        <input id="ticketCustomer" required maxlength="120" placeholder="Customer name">
+        <input id="ticketContact" maxlength="40" placeholder="Contact number (optional)">
+        <input id="ticketAddress" maxlength="250" placeholder="Service address (optional)">
+        <select id="ticketCategory" required><option value="">Select issue</option><option>Connection issue</option><option>Fiber fault</option><option>Router / ONT</option><option>Installation</option><option>Other</option></select>
+        <textarea id="ticketDescription" required maxlength="1000" placeholder="Describe the complaint"></textarea>
+        <button type="submit">Create ticket</button>
+      </form>
+      <div id="myTickets" class="mt-3"></div>
+    </div>
+
+    <div class="rounded-2xl border p-5">
+      <h3 class="font-bold">Announcements</h3><div id="announcements" class="mt-3"></div>
+    </div>
+
+    <div class="rounded-2xl border p-5">
+      <h3 class="font-bold">Message your administrator</h3>
+      <div id="employeeMessages" class="mt-3"></div>
+      <form id="employeeMessageForm" class="flex gap-2 mt-3"><input id="employeeMessageText" required maxlength="1000" placeholder="Write a message"><button>Send</button></form>
+    </div>
+
+    <p id="connectionStatus" class="muted" role="status"></p>
+
+    <p id="actionError" role="alert" class="text-sm text-rose-600"></p>
+  </section>
+</main>
+
+<script type="module" src="./employee.js"></script>
+<script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));</script>
+</body>
+</html>
