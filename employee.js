@@ -339,12 +339,31 @@ $('endShift').onclick = () => {
 };
 
 function getOptionalLocation() {
+  const status = $('gpsStatus');
   return new Promise(resolve => {
-    if (!navigator.geolocation) return resolve(null);
+    if (!navigator.geolocation) {
+      status.textContent = 'GPS unavailable: this browser does not support location services.';
+      return resolve(null);
+    }
+    if (!window.isSecureContext) {
+      status.textContent = 'GPS needs a secure HTTPS connection (or localhost).';
+      return resolve(null);
+    }
+    status.textContent = 'Requesting one-time location permission…';
     navigator.geolocation.getCurrentPosition(
-      position => resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: Math.round(position.coords.accuracy), capturedAt: Date.now() }),
-      () => resolve(null),
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+      position => {
+        const location = { latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: Math.round(position.coords.accuracy), capturedAt: Date.now() };
+        status.textContent = 'GPS captured · accuracy ±' + location.accuracy + ' m · ' + location.latitude.toFixed(5) + ', ' + location.longitude.toFixed(5);
+        return resolve(location);
+      },
+      error => {
+        const message = error.code === 1 ? 'Location permission denied. Allow location access in your browser settings.' :
+          error.code === 2 ? 'Your device could not determine a location. Check device location services.' :
+          'Location request timed out. Try again where GPS reception is better.';
+        status.textContent = message + ' Attendance can continue, but no GPS point was saved.';
+        return resolve(null);
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
   });
 }
