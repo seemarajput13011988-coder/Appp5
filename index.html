@@ -12,6 +12,38 @@
   <style>
     #workspace>div:not(:first-child){border:1px solid #e2e8f0;border-radius:18px;padding:18px;background:#fff}#workspace>div:nth-child(2){background:#eef2ff;border-color:#c7d2fe}#workspace #tasks>article{border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin:12px 0;background:#f8fafc}#workspace>div:first-child p{margin:0;color:#64748b}#workspace>div:first-child h2{margin:3px 0}
   </style>
+  <style>
+  /* K&B workforce visual system; local CSS, no Tailwind dependency */
+  :root{--kb-ink:#132238;--kb-muted:#64748b;--kb-blue:#1d4ed8;--kb-violet:#5b4de8;--kb-line:#dbe4f0;--kb-canvas:#f3f6fc;--kb-teal:#0f766e}
+  body{background:radial-gradient(ellipse at 15% 0%,#dbeafe 0,transparent 38%),var(--kb-canvas);color:var(--kb-ink)}
+  main{margin:24px auto!important;width:min(100% - 24px,720px)!important;min-height:calc(100vh - 48px)!important;border:1px solid #dbe4f0;border-radius:28px;overflow:hidden;box-shadow:0 24px 70px #17255418!important}
+  header{background:linear-gradient(135deg,#101b35 0%,#273a78 58%,#5146c8 100%)!important;padding-top:32px!important}
+  header .brand,header .text-indigo-300{color:#c7d2fe}
+  header .bg-indigo-500\/20{background:#ffffff20!important;border:1px solid #ffffff24}
+  #login{padding-top:28px;padding-bottom:32px}
+  #login h2{font-size:1.65rem;color:#172554}
+  #login>p{color:#64748b}
+  #workspace{padding-top:22px;padding-bottom:30px;gap:18px}
+  #workspace>div{border:1px solid var(--kb-line);border-radius:20px;padding:20px;background:#fff;box-shadow:0 5px 18px #0f172a08}
+  #workspace>div:first-child{background:linear-gradient(115deg,#fff,#f4f7ff);border-color:#dbeafe}
+  #workspace>div:first-child h2{color:#172554}
+  #workspace>div:nth-child(2){background:linear-gradient(135deg,#edf3ff,#f6f3ff);border-color:#c7d2fe}
+  #workspace>div:nth-child(2)>p:first-child{color:#4338ca}
+  #workspace h3{color:#172554;font-size:1.05rem}
+  #workspace .panel{background:#fff}
+  label{color:#334155}
+  input,textarea,select{border-color:#cbd5e1;background:#fff;box-shadow:0 1px 2px #0f172a06}
+  input:focus,textarea:focus,select:focus{border-color:#6366f1;box-shadow:0 0 0 4px #6366f126}
+  button{background:linear-gradient(135deg,#4f46e5,#3730a3);box-shadow:0 3px 8px #4338ca20;transition:transform .15s,filter .15s}
+  button:hover{filter:brightness(1.06);transform:translateY(-1px)}
+  button.ghost,#resetPassword{background:#fff;color:#4338ca;border:1px solid #c7d2fe;box-shadow:none}
+  #endShift{background:#fff;color:#4338ca;border:1px solid #c7d2fe;box-shadow:none}
+  .task,#workspace #tasks>article,#myTickets>article,#announcements>article{background:#f8faff;border-color:#dbe5f2;border-radius:16px}
+  #connectionStatus{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:10px 12px;border-radius:12px}
+  #actionError,#loginError{background:#fff1f2;border-radius:10px;padding:8px}
+  #gpsStatus{font-size:.85rem;line-height:1.5;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid #c7d2fe;color:#3730a3}
+  @media(max-width:520px){main{width:100%!important;margin:0 auto!important;min-height:100vh!important;border-radius:0;border:0}header{border-radius:0 0 24px 24px}#workspace>div{padding:16px!important}}
+</style>
 </head>
 <body class="bg-slate-50 text-slate-900">
 
@@ -80,6 +112,7 @@
         <button id="startShift" class="flex-1 bg-indigo-600 text-white rounded-xl p-3 font-semibold">Start shift</button>
         <button id="endShift" class="flex-1 border border-indigo-200 bg-white text-indigo-700 rounded-xl p-3 font-semibold">End shift</button>
       </div>
+      <p id="gpsStatus" role="status" aria-live="polite" class="mt-3">GPS is not requested yet.</p>
     </div>
 
     <div class="rounded-2xl border p-5">
