@@ -200,7 +200,7 @@ onAuthStateChanged(auth, async user => {
     } else if (code.toUpperCase().includes('NETWORK')) {
       $('loginError').textContent = 'Could not reach Firebase to verify admin access. Check your internet connection and Firebase project status.';
     } else {
-      $('loginError').textContent = \`Unable to verify admin access (\${code}). Check the admin profile record, deployed database rules, and Firebase connectivity.\`;
+      $('loginError').textContent = 'Unable to verify admin access (' + code + '). Check the admin profile record, deployed database rules, and Firebase connectivity.';
     }
   }
 });
