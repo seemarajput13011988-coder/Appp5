@@ -21,7 +21,6 @@ let ticketCache = {};
 let announcementCache = {};
 let auditCache = {};
 let shiftCache = {};
-let teamFeedbackTimer = null;
 let offSelectedMessages = () => {};
 $('signIn').onclick = async () => {
   const button = $('signIn');
