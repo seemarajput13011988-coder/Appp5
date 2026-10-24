@@ -3,6 +3,7 @@ import { app, auth, db } from './firebase.js';
 
 import {
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signInWithCustomToken,
   sendPasswordResetEmail,
   signOut,
@@ -77,6 +78,24 @@ let offAnnouncements = () => {};
 let offMessages = () => {};
 
 let userId = null;
+let pendingRegistrationName = '';
+$('signupForm').onsubmit = async event => {
+  event.preventDefault();
+  const name = $('signupName').value.trim();
+  const password = $('signupPassword').value;
+  if (!name) { $('loginError').textContent = 'Enter your full name.'; return; }
+  if (password !== $('signupConfirm').value) { $('loginError').textContent = 'Passwords do not match.'; return; }
+  const button = $('signupButton'); button.disabled = true;
+  pendingRegistrationName = name;
+  $('loginError').textContent = 'Creating your account…';
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+    await createUserWithEmailAndPassword(auth, $('signupEmail').value.trim(), password);
+  } catch (error) {
+    pendingRegistrationName = '';
+    $('loginError').textContent = authErrorMessage(error.code);
+  } finally { button.disabled = false; }
+};
 let workerShifts = {};
 function workDate(ts) {
   if (!Number.isFinite(ts)) return '';
@@ -192,6 +211,9 @@ $('googleSignIn').onclick = async () => {
 };
 
 function authErrorMessage(code) {
+  if (code === 'auth/email-already-in-use') return 'This email already has an account. Use Sign in or Reset password.';
+  if (code === 'auth/weak-password') return 'Choose a stronger password (at least 6 characters).';
+  if (code === 'auth/invalid-email') return 'Enter a valid email address.';
   if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') return 'Email or password is incorrect.';
   if (code === 'auth/user-disabled') return 'This account is deactivated. Contact your administrator.';
   if (code === 'auth/too-many-requests') return 'Too many sign-in attempts. Wait a while and try again.';
@@ -236,11 +258,12 @@ onAuthStateChanged(auth, async user => {
       if (!existing.exists()) {
         await set(requestRef, {
           email: user.email || '',
-          name: user.displayName || user.email || 'New employee',
+          name: pendingRegistrationName || user.displayName || user.email || 'New employee',
           state: 'pending',
           createdAt: serverTimestamp()
         });
       }
+      pendingRegistrationName = '';
       await signOut(auth);
       $('loginError').textContent = existing.val()?.state === 'rejected'
         ? 'Your access request was declined. Please contact your administrator.'
