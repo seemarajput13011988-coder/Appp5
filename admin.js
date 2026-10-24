@@ -71,6 +71,7 @@ for (const button of document.querySelectorAll('.nav')) {
 
     document.querySelectorAll('.nav').forEach(el => {
       el.classList.toggle('bg-indigo-600', el === button);
+      if (el === button) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
     });
 
     $('pageTitle').textContent =
@@ -120,6 +121,7 @@ async function loadDashboardData(user) {
 
       renderTaskReviews();
       renderTeamManagement();
+      renderGpsLocations();
     }, error => databaseError(error, 'employee profiles')));
 
     unsub.push(onValue(ref(db, 'tasks'), snap => {
@@ -166,6 +168,7 @@ async function loadDashboardData(user) {
 
       $('activeCount').textContent = active;
       $('attendanceList').replaceChildren(...rows);
+      renderGpsLocations();
     }, error => databaseError(error, 'attendance / shifts')));
 
   } catch (e) {
@@ -211,6 +214,73 @@ onAuthStateChanged(auth, async user => {
     }
   }
 });
+
+
+function renderGpsLocations() {
+  const box = $('gpsMapList');
+  if (!box) return;
+  box.replaceChildren();
+  const locations = [];
+  for (const [uid, records] of Object.entries(shiftCache)) {
+    for (const [shiftId, shift] of Object.entries(records || {})) {
+      for (const [kind, location] of [['Shift start', shift.location], ['Shift end', shift.endLocation]]) {
+        if (!location || !Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) continue;
+        locations.push({
+          uid, shiftId, kind, location,
+          name: employees[uid]?.name || uid,
+          team: employees[uid]?.team || 'Unassigned',
+          timestamp: kind === 'Shift start' ? shift.startedAt : shift.endedAt
+        });
+      }
+    }
+  }
+  locations.sort((a,b) => (b.location.capturedAt || b.timestamp || 0) - (a.location.capturedAt || a.timestamp || 0));
+  $('gpsMapSummary').textContent = locations.length
+    ? locations.length + ' recorded GPS point' + (locations.length === 1 ? '' : 's') + ' · newest first'
+    : 'No GPS points recorded yet. Workers must allow location access during a shift action.';
+  if (!locations.length) {
+    const empty = document.createElement('p');
+    empty.className = 'muted mt-3';
+    empty.textContent = 'No location data available.';
+    box.append(empty);
+    return;
+  }
+  for (const item of locations) {
+    const lat = item.location.latitude, lon = item.location.longitude;
+    const card = document.createElement('article');
+    card.className = 'gps-card';
+    const title = document.createElement('h3');
+    title.className = 'font-bold';
+    title.textContent = item.name + ' · ' + item.kind;
+    const team = document.createElement('p');
+    team.className = 'muted text-sm mt-1';
+    team.textContent = 'Team: ' + item.team;
+    const pill = document.createElement('span');
+    pill.className = 'gps-pill';
+    pill.textContent = item.location.accuracy ? 'Accuracy ±' + Math.round(item.location.accuracy) + ' m' : 'Accuracy not reported';
+    const time = document.createElement('p');
+    time.className = 'muted text-sm mt-2';
+    const timestamp = item.location.capturedAt || item.timestamp;
+    time.textContent = 'Recorded: ' + (timestamp ? new Date(timestamp).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}) : 'time unavailable');
+    const coordinates = document.createElement('p');
+    coordinates.className = 'text-sm mt-2';
+    coordinates.textContent = lat.toFixed(6) + ', ' + lon.toFixed(6);
+    const link = document.createElement('a');
+    link.href = 'https://www.openstreetmap.org/?mlat=' + encodeURIComponent(lat) + '&mlon=' + encodeURIComponent(lon) + '#map=17/' + encodeURIComponent(lat) + '/' + encodeURIComponent(lon);
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = 'Open in map';
+    const map = document.createElement('iframe');
+    const delta = 0.008;
+    const bbox = [lon-delta,lat-delta,lon+delta,lat+delta].join('%2C');
+    map.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik&marker=' + encodeURIComponent(lat) + '%2C' + encodeURIComponent(lon);
+    map.loading = 'lazy';
+    map.title = 'Recorded location for ' + item.name;
+    map.referrerPolicy = 'no-referrer';
+    card.append(title,team,pill,time,coordinates,link,map);
+    box.append(card);
+  }
+}
 
 function renderTeamManagement() {
   const employeeSelect = $('teamEmployee');
