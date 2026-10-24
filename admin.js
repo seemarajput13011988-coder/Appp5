@@ -21,6 +21,7 @@ let ticketCache = {};
 let announcementCache = {};
 let auditCache = {};
 let shiftCache = {};
+let teamFeedbackTimer = null;
 let offSelectedMessages = () => {};
 $('signIn').onclick = async () => {
   const button = $('signIn');
@@ -119,6 +120,7 @@ async function loadDashboardData(user) {
       }
 
       renderTaskReviews();
+      renderTeamManagement();
     }, error => databaseError(error, 'employee profiles')));
 
     unsub.push(onValue(ref(db, 'tasks'), snap => {
@@ -210,6 +212,77 @@ onAuthStateChanged(auth, async user => {
     }
   }
 });
+
+function renderTeamManagement() {
+  const employeeSelect = $('teamEmployee');
+  const selectedUid = employeeSelect.value;
+  employeeSelect.replaceChildren(new Option('Select employee', ''));
+  for (const [uid, profile] of Object.entries(employees).sort((a, b) =>
+    String(a[1].name || a[0]).localeCompare(String(b[1].name || b[0]))
+  )) {
+    employeeSelect.add(new Option(profile.name || uid, uid));
+  }
+  if (employees[selectedUid]) employeeSelect.value = selectedUid;
+
+  const groups = {};
+  for (const [uid, profile] of Object.entries(employees)) {
+    const team = String(profile.team || 'Unassigned').trim() || 'Unassigned';
+    if (!groups[team]) groups[team] = [];
+    groups[team].push({ uid, name: profile.name || uid, email: profile.email || '' });
+  }
+
+  const box = $('teamList');
+  box.replaceChildren();
+  for (const [team, members] of Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]))) {
+    const section = document.createElement('section');
+    section.className = 'border rounded-xl p-4 mb-3';
+    const heading = document.createElement('h3');
+    heading.className = 'font-bold';
+    heading.textContent = team + ' · ' + members.length + (members.length === 1 ? ' employee' : ' employees');
+    const list = document.createElement('div');
+    list.className = 'mt-2';
+    for (const member of members.sort((a, b) => a.name.localeCompare(b.name))) {
+      const row = document.createElement('p');
+      row.className = 'list-row';
+      row.textContent = member.name + (member.email ? ' · ' + member.email : '');
+      list.append(row);
+    }
+    section.append(heading, list);
+    box.append(section);
+  }
+  if (!Object.keys(employees).length) box.textContent = 'No employee profiles found.';
+}
+
+$('teamEmployee').onchange = () => {
+  const uid = $('teamEmployee').value;
+  $('teamName').value = employees[uid]?.team || '';
+  $('teamFeedback').textContent = '';
+};
+
+$('teamAssignmentForm').onsubmit = async event => {
+  event.preventDefault();
+  const uid = $('teamEmployee').value;
+  const team = $('teamName').value.trim();
+  if (!uid || !employees[uid] || !team) {
+    $('teamFeedback').textContent = 'Choose an employee and enter a team name.';
+    return;
+  }
+
+  const button = $('teamAssignmentForm').querySelector('button[type="submit"]');
+  button.disabled = true;
+  $('teamFeedback').textContent = '';
+  $('actionError').textContent = '';
+  try {
+    await update(ref(db, 'profiles/' + uid), { team });
+    await writeAudit('employee.team_assigned', uid + ':' + team);
+    $('teamFeedback').textContent = 'Team assignment saved.';
+  } catch (error) {
+    $('teamFeedback').textContent = 'Could not save the team assignment. Check the admin profile and deployed Firebase rules.';
+    databaseError(error, 'employee team assignment');
+  } finally {
+    button.disabled = false;
+  }
+};
 
 $('taskForm').onsubmit = async event => {
   event.preventDefault();
