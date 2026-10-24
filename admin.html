@@ -12,6 +12,48 @@
   <style>
     #dashboard main>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}#dashboard main>div:first-child h1{margin:4px 0;font-size:clamp(1.65rem,4vw,2rem)}.page>div,.page form{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:20px}.page .grid>div{background:#fff;border:1px solid #e2e8f0;border-radius:18px;padding:20px}.page .grid strong{font-size:1.8rem}#taskForm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#taskForm h2,#taskForm textarea,#taskForm button{grid-column:1/-1}#employeeList>div,#attendanceList>div{border-bottom:1px solid #e2e8f0;padding:12px 0;overflow-wrap:anywhere}#taskList article{border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin:12px 0;overflow-wrap:anywhere}@media(max-width:600px){#taskForm{grid-template-columns:1fr}#taskForm>*{grid-column:1/-1}.page>div,.page form{padding:16px}}
   </style>
+  <style>
+  /* K&B admin visual system; explicit styles replace missing utility CSS */
+  :root{--kb-ink:#14233b;--kb-muted:#64748b;--kb-blue:#2563eb;--kb-violet:#5b4de8;--kb-line:#dbe4f0;--kb-canvas:#f3f6fc}
+  body{background:radial-gradient(ellipse at 85% 0%,#dbeafe 0,transparent 36%),var(--kb-canvas);color:var(--kb-ink)}
+  #login{background:linear-gradient(135deg,#e9efff,#f7f8ff 50%,#e6f7f6)}
+  #login>div{border:1px solid #d9e3f3!important;box-shadow:0 25px 75px #1e3a8a18!important}
+  #login>div>div:first-child{display:inline-flex;align-items:center;gap:8px}
+  #login>div>div:first-child:before{content:"◈";display:grid;place-items:center;width:36px;height:36px;border-radius:12px;color:white;background:linear-gradient(135deg,#4f46e5,#0f766e);font-size:20px}
+  #dashboard{background:transparent}
+  aside{background:linear-gradient(180deg,#111d37 0%,#1b2850 70%,#252c65 100%)!important;box-shadow:10px 0 35px #17255410}
+  aside h2{color:#fff}
+  aside .text-indigo-300{color:#a5b4fc}
+  nav{gap:6px}
+  nav button{border-radius:12px!important;padding:12px 14px!important;border:1px solid transparent!important;color:#dbeafe!important}
+  nav button:hover{background:#ffffff13!important;border-color:#ffffff15!important}
+  nav button[aria-current="page"],nav button.bg-indigo-600{background:linear-gradient(135deg,#4f46e5,#3730a3)!important;color:white!important;box-shadow:0 5px 15px #080f2a55}
+  #dashboard main{max-width:1500px!important}
+  #dashboard main>div:first-child{padding:4px 0 18px;border-bottom:1px solid #dbe4f0}
+  #dashboard main>div:first-child h1{color:#172554}
+  .page>div,.page form,.page .grid>div{border:1px solid #dbe4f0!important;box-shadow:0 8px 25px #17255408;border-radius:20px!important}
+  .page .grid>div:nth-child(1){background:linear-gradient(135deg,#fff,#eff6ff)!important;border-top:4px solid #3b82f6!important}
+  .page .grid>div:nth-child(2){background:linear-gradient(135deg,#fff,#f5f3ff)!important;border-top:4px solid #8b5cf6!important}
+  .page .grid>div:nth-child(3){background:linear-gradient(135deg,#fff,#ecfdf5)!important;border-top:4px solid #10b981!important}
+  .page .grid>div:nth-child(4){background:linear-gradient(135deg,#fff,#fff7ed)!important;border-top:4px solid #f59e0b!important}
+  .page .grid strong{color:#172554}
+  .page h2,.page h3{color:#172554}
+  input,textarea,select{border-color:#cbd5e1!important;background:#fff!important}
+  input:focus,textarea:focus,select:focus{outline:3px solid #6366f126!important;border-color:#6366f1!important}
+  button{background:linear-gradient(135deg,#4f46e5,#3730a3);box-shadow:0 3px 8px #4338ca20;transition:filter .15s,transform .15s}
+  button:hover{filter:brightness(1.07);transform:translateY(-1px)}
+  #signOut{background:transparent!important;box-shadow:none}
+  .task-card,#taskList article,#teamList section{background:linear-gradient(120deg,#fff,#f8faff);border-color:#dbe4f0!important}
+  .list-row{border-color:#e2e8f0}
+  #actionError{padding:8px 10px;border-radius:10px;background:#fff1f2}
+  #gpsMapList{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px}
+  .gps-card{border:1px solid #dbe4f0;border-radius:18px;padding:16px;background:#fff;overflow:hidden}
+  .gps-card iframe{width:100%;height:250px;border:0;border-radius:12px;background:#eef2ff;margin-top:12px}
+  .gps-card a{color:#1d4ed8;font-weight:700}
+  .gps-pill{display:inline-flex;background:#dcfce7;color:#166534;border-radius:999px;padding:4px 9px;font-size:.75rem;font-weight:800}
+  @media(min-width:800px){aside{width:260px!important;flex-shrink:0}nav{margin-top:26px}}
+  @media(max-width:600px){#dashboard main{padding:16px!important}aside{padding:16px!important}nav{flex-wrap:nowrap}nav button{flex:0 0 auto!important}}
+</style>
 </head>
 <body class="bg-slate-100 text-slate-900">
 
@@ -39,6 +81,7 @@
       <button data-page="teams" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">♧ Staff Teams</button>
       <button data-page="tasks" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">☷ Tasks</button>
       <button data-page="attendance" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">◷ Attendance</button>
+      <button data-page="gpsmap" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">⌖ GPS Locations</button>
       <button data-page="access" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Access requests</button>
       <button data-page="tickets" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Customer tickets</button>
       <button data-page="announcements" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Announcements</button>
@@ -138,6 +181,15 @@
         <h2 class="font-bold">Task list</h2>
         <div id="taskList" class="mt-4 text-sm"></div>
         <p id="reviewFeedback" role="status" class="text-sm text-indigo-700 mt-3"></p>
+      </div>
+    </section>
+
+    <section id="gpsmap" class="page hidden mt-8">
+      <div class="bg-white border rounded-2xl p-6">
+        <h2 class="font-bold">GPS locations</h2>
+        <p class="muted mt-2">Shows the most recent location recorded during a worker's shift action. This is not continuous live tracking. A location appears only if the worker granted browser location permission.</p>
+        <p id="gpsMapSummary" class="text-sm text-indigo-700 mt-3" role="status"></p>
+        <div id="gpsMapList" class="mt-4"></div>
       </div>
     </section>
 
