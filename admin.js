@@ -119,24 +119,24 @@ async function loadDashboardData(user) {
       }
 
       renderTaskReviews();
-    }));
+    }, error => databaseError(error, 'employee profiles')));
 
     unsub.push(onValue(ref(db, 'tasks'), snap => {
       tasksCache = snap.val() || {};
       $('taskCount').textContent =
         Object.keys(tasksCache).length;
       renderTaskReviews();
-    }));
+    }, error => databaseError(error, 'tasks')));
 
     unsub.push(onValue(ref(db, 'taskRequests'), snap => {
       requestsCache = snap.val() || {};
       renderTaskReviews();
-    }));
+    }, error => databaseError(error, 'task requests')));
 
     unsub.push(onValue(ref(db, 'accessRequests'), snap => {
       accessCache = snap.val() || {};
       renderAccessRequests();
-    }));
+    }, error => databaseError(error, 'access requests')));
 
     unsub.push(onValue(ref(db, 'tickets'), snap => { ticketCache = snap.val() || {}; $('ticketCount').textContent = Object.keys(ticketCache).length; renderTickets(); }, databaseError));
     unsub.push(onValue(ref(db, 'announcements'), snap => { announcementCache = snap.val() || {}; renderAnnouncementList(); }, databaseError));
@@ -165,7 +165,7 @@ async function loadDashboardData(user) {
 
       $('activeCount').textContent = active;
       $('attendanceList').replaceChildren(...rows);
-    }));
+    }, error => databaseError(error, 'attendance / shifts')));
 
   } catch (e) {
     $('actionError').textContent =
@@ -192,9 +192,16 @@ onAuthStateChanged(auth, async user => {
     $('dashboard').classList.remove('hidden');
     $('adminEmail').textContent = user.email || 'Administrator';
     await loadDashboardData(user);
-  } catch {
-    $('loginError').textContent = 'Unable to verify admin access. Check Firebase rules and connectivity.';
+  } catch (e) {
+    const code = String(e?.code || 'unknown').replace(/^database\//, '');
     await signOut(auth);
+    if (code.toUpperCase().includes('PERMISSION_DENIED')) {
+      $('loginError').textContent = 'Firebase denied access to your admin profile. Confirm that your signed-in account has a profiles/<UID> record with role set to "admin", and that the deployed database rules allow users to read their own profile.';
+    } else if (code.toUpperCase().includes('NETWORK')) {
+      $('loginError').textContent = 'Could not reach Firebase to verify admin access. Check your internet connection and Firebase project status.';
+    } else {
+      $('loginError').textContent = \`Unable to verify admin access (\${code}). Check the admin profile record, deployed database rules, and Firebase connectivity.\`;
+    }
   }
 });
 
@@ -298,7 +305,14 @@ document.querySelectorAll('[data-export]').forEach(button => button.onclick = ()
 function formatDate(value) { return value ? new Date(value).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}) : ''; }
 async function writeAudit(action, recordId) { try { await set(push(ref(db,'auditLogs')), { actor:auth.currentUser.uid, action, recordId:String(recordId), createdAt:serverTimestamp() }); } catch { $('actionError').textContent='Action completed but audit log could not be saved.'; } }
 function renderAudit() { const box=$('auditList'); box.replaceChildren(); for (const item of Object.values(auditCache).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,100)) { const p=document.createElement('p'); p.className='list-row'; p.textContent=`${formatDate(item.createdAt)} · ${item.action} · ${item.recordId} · ${item.actor}`; box.append(p); } if (!Object.keys(auditCache).length) box.textContent='No audit events yet.'; }
-function databaseError(error) { $('actionError').textContent = error?.code === 'PERMISSION_DENIED' ? 'Firebase rules denied access. Deploy the updated database rules.' : 'Could not load data. Check your connection.'; }
+function databaseError(error, section = 'data') {
+  const code = String(error?.code || 'unknown').replace(/^database\//, '');
+  if (code.toUpperCase().includes('PERMISSION_DENIED')) {
+    $('actionError').textContent = \`Firebase denied access to \${section}. Check the deployed database rules for this data path and confirm your account has the admin role.\`;
+    return;
+  }
+  $('actionError').textContent = \`Could not load \${section} (\${code}). Check the network connection and Firebase status.\`;
+}
 
 function renderTaskReviews() {
   const box = $('taskList');
