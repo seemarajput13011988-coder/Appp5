@@ -251,17 +251,21 @@ onAuthStateChanged(auth, async user => {
       const shiftData = snap.val() || {};
       cacheValue(`shifts:${userId}`, Object.fromEntries(Object.entries(shiftData).map(([id, shift]) => [id, { status: shift.status, startedAt: shift.startedAt, endedAt: shift.endedAt }]))).catch(() => {});
 
-      shiftActive = shifts[0]?.status === 'active';
-      activeShiftId = shiftActive
-        ? Object.entries(snap.val() || {}).find(([, shift]) => shift.status === 'active')?.[0] || null
-        : null;
+      const active = Object.entries(shiftData).filter(([, shift]) => shift.status === 'active').sort((a,b) => (b[1].startedAt || 0) - (a[1].startedAt || 0));
+      shiftActive = active.length > 0;
+      activeShiftId = active[0]?.[0] || null;
+      $('startShift').disabled = shiftActive;
+      $('endShift').disabled = !shiftActive;
 
       $('shiftStatus').textContent =
         shiftActive ? 'On duty' : 'Off duty';
     }, async () => {
       const cached = await readCache(`shifts:${userId}`).catch(() => ({}));
       const shifts = Object.values(cached || {}).sort((a,b)=>(b.startedAt||0)-(a.startedAt||0));
-      shiftActive = shifts[0]?.status === 'active';
+      shiftActive = shifts.some(shift => shift.status === 'active');
+      activeShiftId = null;
+      $('startShift').disabled = true;
+      $('endShift').disabled = true;
       $('shiftStatus').textContent = `${shiftActive ? 'On duty' : 'Off duty'} · offline copy`;
     });
 
