@@ -223,7 +223,7 @@ function renderTeamManagement() {
   }
   if (employees[selectedUid]) employeeSelect.value = selectedUid;
 
-  const groups = {};
+  const groups = Object.create(null);
   for (const [uid, profile] of Object.entries(employees)) {
     const team = String(profile.team || 'Unassigned').trim() || 'Unassigned';
     if (!groups[team]) groups[team] = [];
