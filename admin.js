@@ -106,6 +106,9 @@ async function loadDashboardData(user) {
       );
       $('adminTicketAssignee').replaceChildren(new Option('Assign employee', ''));
       $('messageEmployee').replaceChildren(new Option('Select employee', ''));
+      const recordSelection = $('recordEmployee').value;
+      $('recordEmployee').replaceChildren(new Option('Select worker', ''));
+
 
       for (const [uid, profile] of Object.entries(employees)) {
         $('employeeList').append(
@@ -117,8 +120,11 @@ async function loadDashboardData(user) {
         );
       $('adminTicketAssignee').add(new Option(profile.name || uid, uid));
       $('messageEmployee').add(new Option(profile.name || uid, uid));
+      $('recordEmployee').add(new Option(profile.name || uid, uid));
       }
 
+      if (employees[recordSelection]) $('recordEmployee').value = recordSelection;
+      renderWorkerRecords();
       renderTaskReviews();
       renderTeamManagement();
       renderGpsLocations();
@@ -129,6 +135,7 @@ async function loadDashboardData(user) {
       $('taskCount').textContent =
         Object.keys(tasksCache).length;
       renderTaskReviews();
+      renderWorkerRecords();
     }, error => databaseError(error, 'tasks')));
 
     unsub.push(onValue(ref(db, 'taskRequests'), snap => {
@@ -141,7 +148,7 @@ async function loadDashboardData(user) {
       renderAccessRequests();
     }, error => databaseError(error, 'access requests')));
 
-    unsub.push(onValue(ref(db, 'tickets'), snap => { ticketCache = snap.val() || {}; $('ticketCount').textContent = Object.keys(ticketCache).length; renderTickets(); }, databaseError));
+    unsub.push(onValue(ref(db, 'tickets'), snap => { ticketCache = snap.val() || {}; $('ticketCount').textContent = Object.keys(ticketCache).length; renderTickets(); renderWorkerRecords(); }, databaseError));
     unsub.push(onValue(ref(db, 'announcements'), snap => { announcementCache = snap.val() || {}; renderAnnouncementList(); }, databaseError));
     unsub.push(onValue(ref(db, 'auditLogs'), snap => { auditCache = snap.val() || {}; renderAudit(); }, databaseError));
 
@@ -169,6 +176,7 @@ async function loadDashboardData(user) {
       $('activeCount').textContent = active;
       $('attendanceList').replaceChildren(...rows);
       renderGpsLocations();
+      renderWorkerRecords();
     }, error => databaseError(error, 'attendance / shifts')));
 
   } catch (e) {
@@ -279,6 +287,45 @@ function renderGpsLocations() {
     box.append(card);
   }
 }
+
+
+function indiaDate(timestamp) {
+  if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(timestamp));
+  const get = type => parts.find(part => part.type === type)?.value || '';
+  return get('year') + '-' + get('month') + '-' + get('day');
+}
+function workerRecordCard(title, items, format) {
+  const article = document.createElement('article');
+  const heading = document.createElement('h3'); heading.textContent = title + ' (' + items.length + ')';
+  article.append(heading);
+  if (!items.length) { const empty = document.createElement('p'); empty.className='muted'; empty.textContent='No records for this date.'; article.append(empty); }
+  for (const item of items) { const row = document.createElement('p'); row.textContent = format(item); article.append(row); }
+  return article;
+}
+function renderWorkerRecords() {
+  const uid = $('recordEmployee')?.value;
+  const day = $('recordDate')?.value;
+  const summary = $('workerRecordSummary'), details = $('workerRecordDetails');
+  if (!summary || !details) return;
+  details.replaceChildren();
+  if (!uid || !employees[uid]) { summary.textContent = 'Select a worker to view individual records.'; return; }
+  if (!day) { summary.textContent = 'Choose a work date.'; return; }
+  const profile = employees[uid];
+  const shifts = Object.values(shiftCache[uid] || {}).filter(s => indiaDate(s.startedAt) === day);
+  const tasks = Object.values(tasksCache).filter(t => (t.assignedTo === uid || t.assigneeUid === uid || t.employeeUid === uid) && indiaDate(t.createdAt || t.assignedAt || t.startedAt) === day);
+  const tickets = Object.values(ticketCache).filter(t => (t.assignedTo === uid || t.assigneeUid === uid || t.employeeUid === uid || t.createdBy === uid) && indiaDate(t.createdAt) === day);
+  summary.textContent = (profile.name || uid) + ' · ' + (profile.team || 'Unassigned') + ' · ' + day + ' · ' + shifts.length + ' shifts, ' + tasks.length + ' tasks, ' + tickets.length + ' tickets';
+  const fmt = ts => typeof ts === 'number' ? new Date(ts).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}) : '—';
+  details.append(
+    workerRecordCard('Attendance',shifts,s => 'Start: '+fmt(s.startedAt)+' · End: '+fmt(s.endedAt)+' · '+(s.status || 'Unknown')),
+    workerRecordCard('Tasks created on this date',tasks,t => (t.title || 'Task')+' · '+(t.status || 'Pending')),
+    workerRecordCard('Tickets created on this date',tickets,t => (t.customer || t.customerName || t.title || 'Ticket')+' · '+(t.status || 'Open'))
+  );
+}
+$('recordEmployee').onchange = renderWorkerRecords;
+$('recordDate').onchange = renderWorkerRecords;
+$('recordDate').value = indiaDate(Date.now());
 
 function renderTeamManagement() {
   const employeeSelect = $('teamEmployee');
