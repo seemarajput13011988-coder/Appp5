@@ -70,6 +70,16 @@
   #messageList,#messagesList{display:grid;gap:10px;min-height:80px}
   @media(min-width:800px){aside{position:sticky;top:0;height:100vh;overflow-y:auto}}
   @media(max-width:700px){.page button{width:auto;max-width:100%}#dashboard main>div:first-child{align-items:flex-start}}
+
+  .chat-thread{display:flex!important;flex-direction:column;gap:12px;min-height:160px;max-height:430px;overflow-y:auto;padding:16px!important;border:1px solid #dbe4f0;border-radius:16px;background:#f8fafc!important;margin-top:14px}
+  .chat-message{max-width:min(85%,520px);padding:11px 14px;border-radius:15px;background:#fff;border:1px solid #dbe4f0;align-self:flex-start;overflow-wrap:anywhere}
+  .chat-message.mine{align-self:flex-end;background:#e0e7ff;border-color:#c7d2fe}
+  .chat-message p{margin:5px 0 0;white-space:pre-wrap;line-height:1.45}
+  .chat-meta{font-size:.75rem;color:#64748b;font-weight:650}
+  .chat-compose{display:flex!important;flex-direction:row!important;align-items:center;gap:10px;margin-top:12px}
+  .chat-compose input{flex:1;min-width:0}
+  .chat-compose button{flex:0 0 auto}
+  @media(max-width:520px){.chat-compose{flex-wrap:wrap}.chat-compose button{width:100%}}
 </style>
 </head>
 <body class="bg-slate-100 text-slate-900">
@@ -246,7 +256,7 @@
     </section>
 
     <section id="messages" class="page hidden mt-8">
-      <div class="bg-white border rounded-2xl p-6"><h2 class="font-bold">Employee messages</h2><label>Employee<select id="messageEmployee"><option value="">Select employee</option></select></label><div id="adminMessages" class="mt-4"></div><form id="adminMessageForm" class="flex gap-2 mt-3"><input id="adminMessageText" required maxlength="1000" placeholder="Reply"><button>Send</button></form></div>
+      <div class="bg-white border rounded-2xl p-6"><h2 class="font-bold">Employee messages</h2><label>Employee<select id="messageEmployee"><option value="">Select employee</option></select></label><div id="adminMessages" class="chat-thread" role="log" aria-label="Employee conversation" aria-live="polite"><p class="muted">Select an employee to view messages.</p></div><form id="adminMessageForm" class="chat-compose"><input id="adminMessageText" required maxlength="1000" placeholder="Reply"><button>Send</button></form></div>
     </section>
 
     <section id="reports" class="page hidden mt-8">
