@@ -76,6 +76,8 @@ let offRequests = () => {};
 let offTickets = () => {};
 let offAnnouncements = () => {};
 let offMessages = () => {};
+let offApproval = () => {};
+$('approvalSignOut').onclick = () => signOut(auth);
 
 let userId = null;
 let pendingRegistrationName = '';
@@ -230,12 +232,15 @@ onAuthStateChanged(auth, async user => {
   offTickets();
   offAnnouncements();
   offMessages();
+  offApproval();
   userId = null;
+  $('approvalStatus').classList.add('hidden');
 
   if (!user) {
     $('authLoading').classList.add('hidden');
     $('login').classList.remove('hidden');
     $('workspace').classList.add('hidden');
+    $('approvalStatus').classList.add('hidden');
     return;
   }
 
@@ -264,10 +269,30 @@ onAuthStateChanged(auth, async user => {
         });
       }
       pendingRegistrationName = '';
-      await signOut(auth);
-      $('loginError').textContent = existing.val()?.state === 'rejected'
-        ? 'Your access request was declined. Please contact your administrator.'
-        : 'Access request submitted. An administrator must approve your account.';
+      $('authLoading').classList.add('hidden');
+      $('approvalStatus').classList.remove('hidden');
+      $('approvalAccount').textContent = user.email || 'Your employee account';
+      const displayApproval = request => {
+        const state = request?.state || 'pending';
+        $('approvalStep1').className = 'approval-step done';
+        $('approvalStep2').className = 'approval-step ' + (state === 'pending' ? 'current' : state === 'approved' ? 'done' : '');
+        $('approvalStep3').className = 'approval-step ' + (state === 'approved' ? 'current' : '');
+        $('approvalMessage').textContent = state === 'approved'
+          ? 'Approved! Opening your employee workspace…'
+          : state === 'rejected'
+            ? 'Your request was declined. Contact your administrator for details.'
+            : 'Your account is created. Waiting for administrator approval. This page updates automatically.';
+        if (state === 'approved') {
+          get(ref(db, `profiles/${user.uid}`)).then(snap => {
+            if (snap.exists() && auth.currentUser?.uid === user.uid) window.location.reload();
+            else $('approvalMessage').textContent = 'Approved, but your employee profile is missing. Ask the administrator to approve again or check Firebase permissions.';
+          }).catch(() => { $('approvalMessage').textContent = 'Approved. Could not verify employee profile. Please retry shortly.'; });
+        }
+      };
+      displayApproval(existing.val());
+      offApproval = onValue(requestRef, snap => displayApproval(snap.val()), error => {
+        $('approvalMessage').textContent = 'Unable to read approval status: ' + (error?.message || 'Check Firebase database permissions.');
+      });
       return;
     }
 
