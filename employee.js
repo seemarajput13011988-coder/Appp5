@@ -411,15 +411,36 @@ function renderAnnouncements(data) {
 
 function renderMessages(data) {
   const box = $('employeeMessages'); box.replaceChildren();
-  for (const item of Object.values(data).sort((a,b) => (a.createdAt || 0) - (b.createdAt || 0))) {
-    const row = document.createElement('p'); row.textContent = `${item.senderRole === 'admin' ? 'Admin' : 'You'}: ${item.text}`; box.append(row);
+  const messages = Object.values(data).sort((a,b) => (a.createdAt || 0) - (b.createdAt || 0));
+  if (!messages.length) {
+    const empty = document.createElement('p'); empty.className = 'muted';
+    empty.textContent = 'No messages yet. You can contact your administrator here.';
+    box.append(empty); return;
   }
+  for (const item of messages) {
+    const mine = item.senderRole === 'employee';
+    const bubble = document.createElement('article');
+    bubble.className = 'chat-message' + (mine ? ' mine' : '');
+    const meta = document.createElement('div'); meta.className = 'chat-meta';
+    const when = typeof item.createdAt === 'number' ? ' · ' + new Date(item.createdAt).toLocaleString('en-IN') : '';
+    meta.textContent = (mine ? 'You' : 'Administrator') + when;
+    const body = document.createElement('p'); body.textContent = item.text || '';
+    bubble.append(meta,body); box.append(bubble);
+  }
+  box.scrollTop = box.scrollHeight;
 }
-
 $('employeeMessageForm').onsubmit = async event => {
   event.preventDefault();
-  try { await set(push(ref(db, `messages/${userId}`)), { text: $('employeeMessageText').value.trim(), senderUid: userId, senderRole: 'employee', createdAt: serverTimestamp() }); $('employeeMessageText').value = ''; }
-  catch { $('actionError').textContent = 'Could not send message.'; }
+  const message = $('employeeMessageText').value.trim();
+  if (!userId || !message) return;
+  const button = $('employeeMessageForm').querySelector('button');
+  button.disabled = true;
+  try {
+    await set(push(ref(db, `messages/${userId}`)), { text:message, senderUid:userId, senderRole:'employee', createdAt:serverTimestamp() });
+    $('employeeMessageText').value = '';
+    $('actionError').textContent = '';
+  } catch (error) { showDbError(error); }
+  finally { button.disabled = false; }
 };
 
 async function updateConnectionStatus() {
