@@ -75,7 +75,7 @@ for (const button of document.querySelectorAll('.nav')) {
     });
 
     $('pageTitle').textContent =
-      page[0].toUpperCase() + page.slice(1);
+      button.dataset.title || (page[0].toUpperCase() + page.slice(1));
   };
 }
 
