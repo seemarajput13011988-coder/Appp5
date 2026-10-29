@@ -47,6 +47,7 @@ onAuthStateChanged(auth, async user => {
   try {
     const snap = await get(ref(db, 'profiles/' + user.uid));
     const profile = snap.val();
+    if (auth.currentUser?.uid !== user.uid) return;
     if (!profile || profile.role !== 'employee' || profile.active === false || profile.disabled === true) return;
     currentUid = user.uid;
     stopRequests = onValue(ref(db, 'employeeRequests/' + user.uid), value => renderRequests(value.val() || {}), () => {
