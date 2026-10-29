@@ -52,3 +52,4 @@ jobs:
           test -s dist/index.html
           test -s dist/admin.html
           test -s dist/enterprise-admin.js
+          test -s dist/employee-requests.js
