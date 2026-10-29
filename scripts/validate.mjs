@@ -47,21 +47,21 @@ for (const path of jsFiles) {
 for (const [htmlPath, scripts] of htmlPairs) {
   const html = await read(htmlPath);
   if (!html) continue;
-  const ids = [...html.matchAll(/\\bid=["']([^"']+)["']/g)].map(match => match[1]);
+  const ids = [...html.matchAll(/\bid=["']([^"']+)["']/g)].map(match => match[1]);
   const idSet = new Set(ids);
   const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
   if (duplicates.length) errors.push(`${htmlPath} contains duplicate IDs: ${[...new Set(duplicates)].join(', ')}`);
 
   for (const scriptPath of scripts) {
     const source = await read(scriptPath);
-        for (const match of source.matchAll(/\\$\\(['"]([^'"]+)['"]\\)/g)) {
+    for (const match of source.matchAll(/\$\(['"]([^'"]+)['"]\)/g)) {
       if (!idSet.has(match[1])) errors.push(`${scriptPath} references missing #${match[1]} in ${htmlPath}`);
     }
   }
 }
 
 const buildScript = await read('scripts/build-web.mjs');
-for (const match of buildScript.matchAll(/'([^']+\\.(?:html|js|webmanifest|svg))'/g)) {
+for (const match of buildScript.matchAll(/'([^']+\.(?:html|js|webmanifest|svg))'/g)) {
   try { await access(match[1]); }
   catch { errors.push(`Build input is missing: ${match[1]}`); }
 }
