@@ -98,8 +98,7 @@ async function loadDashboardData(user) {
           .filter(([, p]) => p.role === 'employee')
       );
 
-      $('employeeCount').textContent =
-        Object.keys(employees).length;
+      $('employeeCount').textContent = Object.values(employees).filter(p => p.active !== false && p.status !== 'archived' && p.status !== 'inactive').length;
 
       $('employeeList').replaceChildren();
       $('assignee').replaceChildren(
@@ -130,10 +129,11 @@ async function loadDashboardData(user) {
         const statusButton = document.createElement('button');
         statusButton.type = 'button';
         statusButton.className = 'rounded-lg border px-3 py-2 text-xs font-semibold';
-        statusButton.textContent = isActive ? 'Suspend' : 'Reactivate';
+        statusButton.textContent = profile.status === 'archived' ? 'Restore' : isActive ? 'Suspend' : 'Reactivate';
         statusButton.onclick = async () => {
           if (!auth.currentUser) return;
-          if (!confirm((isActive ? 'Suspend ' : 'Reactivate ') + (profile.name || uid) + '?')) return;
+          const operation = profile.status === 'archived' ? 'Restore' : isActive ? 'Suspend' : 'Reactivate';
+          if (!confirm(operation + ' ' + (profile.name || uid) + '?')) return;
           statusButton.disabled = true;
           try {
             await update(ref(db, 'profiles/' + uid), {
@@ -142,7 +142,7 @@ async function loadDashboardData(user) {
               updatedAt: serverTimestamp(),
               updatedBy: auth.currentUser.uid
             });
-            await writeAudit(isActive ? 'employee.suspended' : 'employee.reactivated', uid);
+            await writeAudit(profile.status === 'archived' ? 'employee.restored' : isActive ? 'employee.suspended' : 'employee.reactivated', uid);
           } catch {
             $('actionError').textContent = 'Employee status could not be changed. Check Firebase rules.';
           } finally {
