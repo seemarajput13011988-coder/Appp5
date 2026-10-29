@@ -27,7 +27,7 @@ function createWindow() {
     {
       label: 'Workspace',
       submenu: [
-        { label: 'Employee workspace', click: () => window.loadFile(path.join(__dirname, '..', 'dist', 'index.html')) },
+        { label: 'Employee workspace', click: () => window.loadFile(path.join(__dirname, '..', 'dist', 'employee.html')) },
         { label: 'Admin command center', click: () => window.loadFile(path.join(__dirname, '..', 'dist', 'admin.html')) },
         { type: 'separator' },
         { role: 'reload' },
