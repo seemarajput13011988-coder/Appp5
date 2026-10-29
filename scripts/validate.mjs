@@ -70,6 +70,20 @@ for (const path of buildInputs) {
   catch { errors.push(`Build input is missing: ${path}`); }
 }
 
+const employeeSource = await read('employee.js');
+const adminSource = await read('admin.js');
+const rulesSource = await read('database.rules.json');
+const approvalChecks = [
+  [employeeSource.includes("state === 'approved'") && employeeSource.includes("get(ref(db, `profiles/\u0024{user.uid}`)).then"), 'Employee approval screen must verify the approved employee profile'],
+  [employeeSource.includes("window.location.reload()"), 'Employee approval must refresh the session into the newly approved workspace'],
+  [adminSource.includes("changes[`accessRequests/\u0024{uid}/state`] = state") && adminSource.includes("changes[`profiles/\u0024{uid}`] = {"), 'Admin approval must update the request and employee profile together'],
+  [rulesSource.includes('"accessRequests"') && rulesSource.includes("newData.child('state').val() === 'pending'"), 'Firebase rules must constrain new access requests to pending state'],
+  [rulesSource.includes('"employeeRequests"') && rulesSource.includes("newData.child('createdBy').val() === auth.uid"), 'Firebase rules must bind employee requests to their authenticated owner']
+];
+for (const [passed, message] of approvalChecks) {
+  if (!passed) errors.push(`Approval-flow regression check failed: ${message}`);
+}
+
 if (errors.length) {
   console.error('Website validation failed:');
   for (const error of errors) console.error(`- ${error}`);
