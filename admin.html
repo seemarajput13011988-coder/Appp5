@@ -116,6 +116,7 @@
       <button data-page="customers" data-title="Customer CRM" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">ISP Customers</button>
       <button data-page="finance" data-title="Finance & Ledger" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Finance & Ledger</button>
       <button data-page="inventory" data-title="Inventory & Stock" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Inventory & Stock</button>
+      <button data-page="employeeRequests" data-title="Employee Requests" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Leave & Claims</button>
       <button data-page="announcements" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Announcements</button>
       <button data-page="messages" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Messages</button>
       <button data-page="reports" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Exports & audit</button>
@@ -318,6 +319,15 @@
         <p id="inventoryFeedback" role="status" class="text-sm text-indigo-700 mt-3"></p>
       </div>
       <div class="bg-white border rounded-2xl p-5 md:p-6"><h2 class="font-bold text-lg">Stock register</h2><div id="inventoryList" class="mt-4"></div></div>
+    </section>
+
+    <section id="employeeRequests" class="page hidden mt-8">
+      <div class="bg-white border rounded-2xl p-5 md:p-6">
+        <h2 class="font-bold text-xl">Employee requests</h2>
+        <p class="muted mt-1">Review leave, expense reimbursement and salary-advance requests. Decisions are recorded with the administrator account.</p>
+        <p id="adminRequestFeedback" role="status" class="text-sm text-indigo-700 mt-3"></p>
+        <div id="adminEmployeeRequestList" class="mt-4"></div>
+      </div>
     </section>
 
     <section id="announcements" class="page hidden mt-8">
