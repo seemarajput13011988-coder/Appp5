@@ -131,6 +131,7 @@ $('workerHistoryDate').onchange = showDailyAttendance;
 let shiftActive = false;
 let activeShiftId = null;
 let employeeTasks = [];
+let employeeTaskRequests = {};
 const OUTBOX_DB = 'kb-workforce-offline';
 
 function openOutbox() {
@@ -377,7 +378,13 @@ onAuthStateChanged(auth, async user => {
 
     offRequests = onValue(
       ref(db, `taskRequests/${userId}`),
-      () => renderEmployeeTasks()
+      snap => {
+        employeeTaskRequests = snap.val() || {};
+        renderEmployeeTasks();
+      },
+      () => {
+        $('taskFeedback').textContent = 'Could not refresh task review status. Check your connection.';
+      }
     );
 
     const assignedTasks = query(
@@ -588,22 +595,36 @@ function renderEmployeeTasks() {
 
     card.append(heading, detail);
 
-    if (!['Approved', 'Rework Required'].includes(task.status)) {
-      const notes = document.createElement('textarea');
-      notes.placeholder = 'Work update / completion notes';
-      notes.maxLength = 1000;
-      notes.className =
-        'border rounded-lg p-2 w-full mt-3 text-sm';
+    const hasPendingReview = Object.values(employeeTaskRequests).some(
+      request => request.taskId === id && request.state === 'pending'
+    );
+    if (hasPendingReview) {
+      const pending = document.createElement('p');
+      pending.className = 'text-sm font-semibold mt-3';
+      pending.textContent = 'Update submitted · waiting for administrator review';
+      card.append(pending);
+    } else {
+      const taskActions = task.status === 'Assigned'
+        ? [['Start work', 'start']]
+        : ['In Progress', 'Rework Required'].includes(task.status)
+          ? [['Submit completion', 'complete']]
+          : task.status === 'Approved'
+            ? []
+            : [['Start work', 'start'], ['Submit completion', 'complete']];
 
-      card.append(notes);
+      if (taskActions.length) {
+        const notes = document.createElement('textarea');
+        notes.placeholder = task.status === 'Rework Required'
+          ? 'Update the work and explain what you fixed'
+          : 'Work update / completion notes';
+        notes.maxLength = 1000;
+        notes.className = 'border rounded-lg p-2 w-full mt-3 text-sm';
+        card.append(notes);
 
-      const buttons = document.createElement('div');
-      buttons.className = 'flex gap-2 mt-2';
+        const buttons = document.createElement('div');
+        buttons.className = 'flex flex-wrap gap-2 mt-2';
 
-      for (const [label, kind] of [
-        ['Start work', 'start'],
-        ['Submit completion', 'complete']
-      ]) {
+        for (const [label, kind] of taskActions) {
         const button = document.createElement('button');
         button.textContent = label;
         button.className =
@@ -653,7 +674,8 @@ function renderEmployeeTasks() {
         buttons.append(button);
       }
 
-      card.append(buttons);
+        card.append(buttons);
+      }
     }
 
     box.append(card);
