@@ -111,16 +111,74 @@ async function loadDashboardData(user) {
 
 
       for (const [uid, profile] of Object.entries(employees)) {
-        $('employeeList').append(
-          makeRow(`${profile.name || uid} · ${profile.team || 'Unassigned'}`)
-        );
+        const isActive = profile.active !== false && profile.status !== 'archived' && profile.status !== 'inactive';
+        const card = document.createElement('article');
+        card.className = 'border-b py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3';
+        const details = document.createElement('div');
+        details.className = 'min-w-0';
+        const name = document.createElement('strong');
+        name.className = 'block';
+        name.textContent = profile.name || uid;
+        const meta = document.createElement('p');
+        meta.className = 'text-xs text-slate-500 mt-1';
+        meta.textContent = (profile.team || 'Unassigned') + ' · ' + (isActive ? 'Active' : 'Suspended / archived') + ' · ' + (profile.email || uid);
+        details.append(name, meta);
+        const actions = document.createElement('div');
+        actions.className = 'flex flex-wrap gap-2';
+        const statusButton = document.createElement('button');
+        statusButton.type = 'button';
+        statusButton.className = 'rounded-lg border px-3 py-2 text-xs font-semibold';
+        statusButton.textContent = isActive ? 'Suspend' : 'Reactivate';
+        statusButton.onclick = async () => {
+          if (!auth.currentUser) return;
+          if (!confirm((isActive ? 'Suspend ' : 'Reactivate ') + (profile.name || uid) + '?')) return;
+          statusButton.disabled = true;
+          try {
+            await update(ref(db, 'profiles/' + uid), {
+              active: !isActive,
+              status: isActive ? 'inactive' : 'active',
+              updatedAt: serverTimestamp(),
+              updatedBy: auth.currentUser.uid
+            });
+            await writeAudit(isActive ? 'employee.suspended' : 'employee.reactivated', uid);
+          } catch {
+            $('actionError').textContent = 'Employee status could not be changed. Check Firebase rules.';
+          } finally {
+            statusButton.disabled = false;
+          }
+        };
+        const archiveButton = document.createElement('button');
+        archiveButton.type = 'button';
+        archiveButton.className = 'rounded-lg border px-3 py-2 text-xs font-semibold text-rose-700';
+        archiveButton.textContent = 'Archive';
+        archiveButton.disabled = profile.status === 'archived';
+        archiveButton.onclick = async () => {
+          if (!auth.currentUser || profile.status === 'archived') return;
+          if (!confirm('Archive ' + (profile.name || uid) + '? This disables app access but preserves historical records.')) return;
+          archiveButton.disabled = true;
+          try {
+            await update(ref(db, 'profiles/' + uid), {
+              active: false,
+              status: 'archived',
+              archivedAt: serverTimestamp(),
+              archivedBy: auth.currentUser.uid
+            });
+            await writeAudit('employee.archived', uid);
+          } catch {
+            $('actionError').textContent = 'Employee could not be archived. Check Firebase rules.';
+            archiveButton.disabled = false;
+          }
+        };
+        actions.append(statusButton, archiveButton);
+        card.append(details, actions);
+        $('employeeList').append(card);
 
-        $('assignee').add(
-          new Option(profile.name || uid, uid)
-        );
-      $('adminTicketAssignee').add(new Option(profile.name || uid, uid));
-      $('messageEmployee').add(new Option(profile.name || uid, uid));
-      $('recordEmployee').add(new Option(profile.name || uid, uid));
+        if (isActive) {
+          $('assignee').add(new Option(profile.name || uid, uid));
+          $('adminTicketAssignee').add(new Option(profile.name || uid, uid));
+          $('messageEmployee').add(new Option(profile.name || uid, uid));
+        }
+        $('recordEmployee').add(new Option((isActive ? '' : '[Inactive] ') + (profile.name || uid), uid));
       }
 
       if (employees[recordSelection]) $('recordEmployee').value = recordSelection;
