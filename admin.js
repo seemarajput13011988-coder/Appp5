@@ -255,6 +255,7 @@ onAuthStateChanged(auth, async user => {
   unsub.forEach(fn => fn());
   unsub = [];
   if (!user) {
+    document.querySelectorAll('#dashboard form').forEach(form => form.reset());
     $('login').classList.remove('hidden');
     $('dashboard').classList.add('hidden');
     return;
