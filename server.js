@@ -5,6 +5,7 @@ const path = require('node:path');
 const hostname = '0.0.0.0';
 const port = Number(process.env.PORT) || 3000;
 const root = path.resolve(__dirname);
+const allowedFiles = new Set(['app.html', 'index.html', 'admin.html', 'employee.js', 'employee-requests.js', 'admin.js', 'enterprise-admin.js', 'firebase.js', 'manifest.webmanifest', 'icon.svg', 'sw.js']);
 const types = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -35,6 +36,11 @@ const server = http.createServer((req, res) => {
     return;
   }
   if (pathname === '/') pathname = '/index.html';
+  if (pathname.split('/').filter(Boolean).length !== 1 || !allowedFiles.has(path.basename(pathname))) {
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.end('Not found');
+    return;
+  }
 
   const filePath = path.resolve(root, '.' + pathname);
   if (filePath !== root && !filePath.startsWith(root + path.sep)) {
