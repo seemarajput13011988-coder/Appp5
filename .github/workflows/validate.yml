@@ -38,6 +38,7 @@ jobs:
           node --check scripts/build-web.mjs
           node --check electron/main.cjs
           node --input-type=module --check < employee.js
+          node --input-type=module --check < employee-requests.js
           node --input-type=module --check < admin.js
           node --input-type=module --check < enterprise-admin.js
       - name: Validate JSON and Firebase rules syntax
