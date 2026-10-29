@@ -318,13 +318,19 @@
     </section>
 
     <section id="finance" class="page hidden mt-8 space-y-5">
+      <div class="bg-white border rounded-2xl p-5 md:p-6">
+        <div class="flex flex-wrap items-end gap-3 justify-between">
+          <div><h2 class="font-bold text-lg">Report period</h2><p class="muted mt-1">Choose a month to view its recorded income, expenses and net balance. Clear the month to view all records.</p></div>
+          <div class="flex flex-wrap gap-2 items-center"><label class="text-sm font-semibold grid gap-1">Month<input id="financePeriod" type="month" class="border rounded-xl p-3"></label><button id="financeAllPeriod" type="button" class="border rounded-xl px-4 py-3">All time</button></div>
+        </div>
+      </div>
       <div class="grid sm:grid-cols-3 gap-3">
-        <div class="bg-white border rounded-2xl p-5"><p class="text-sm text-slate-500">Recorded income</p><strong id="financeIncomeTotal" class="text-2xl">₹0.00</strong></div>
-        <div class="bg-white border rounded-2xl p-5"><p class="text-sm text-slate-500">Recorded expenses</p><strong id="financeExpenseTotal" class="text-2xl">₹0.00</strong></div>
-        <div class="bg-white border rounded-2xl p-5"><p class="text-sm text-slate-500">Net recorded balance</p><strong id="financeNetTotal" class="text-2xl">₹0.00</strong></div>
+        <div class="bg-white border rounded-2xl p-5"><p id="financeIncomeLabel" class="text-sm text-slate-500">Recorded income</p><strong id="financeIncomeTotal" class="text-2xl">₹0.00</strong></div>
+        <div class="bg-white border rounded-2xl p-5"><p id="financeExpenseLabel" class="text-sm text-slate-500">Recorded expenses</p><strong id="financeExpenseTotal" class="text-2xl">₹0.00</strong></div>
+        <div class="bg-white border rounded-2xl p-5"><p id="financeNetLabel" class="text-sm text-slate-500">Net recorded balance</p><strong id="financeNetTotal" class="text-2xl">₹0.00</strong></div>
       </div>
       <div class="bg-white border rounded-2xl p-5 md:p-6">
-        <h2 class="font-bold text-xl">Transaction ledger</h2><p class="muted mt-1">Records are append-only from this screen. These totals are based only on entries recorded here, not a complete audited profit-and-loss statement.</p>
+        <h2 class="font-bold text-xl">Transaction ledger</h2><p class="muted mt-1">Records are append-only from this screen. The selected period shows only entries recorded here. This is an operational summary, not a complete audited profit-and-loss statement. Export CSV to review the full ledger.</p>
         <form id="financeForm" class="grid sm:grid-cols-2 gap-3 mt-5">
           <label class="grid gap-1 text-sm font-semibold">Entry type<select id="financeType" class="border rounded-xl p-3"><option value="income">Income</option><option value="expense">Expense</option></select></label>
           <label class="grid gap-1 text-sm font-semibold">Amount (₹)<input id="financeAmount" type="number" min="0.01" max="100000000" step="0.01" required class="border rounded-xl p-3" placeholder="0.00"></label>
