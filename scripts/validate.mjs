@@ -70,6 +70,17 @@ for (const path of buildInputs) {
   catch { errors.push(`Build input is missing: ${path}`); }
 }
 
+const netlifyConfig = await read('netlify.toml');
+const netlifyChecks = [
+  [netlifyConfig.includes('command = "npm run build:web"'), 'Netlify must run the verified website build command'],
+  [netlifyConfig.includes('publish = "dist"'), 'Netlify must publish the generated dist directory'],
+  [netlifyConfig.includes('NODE_VERSION = "20"'), 'Netlify must use the Node.js version used by CI'],
+  [netlifyConfig.includes('to = "/employee.html"') && netlifyConfig.includes('to = "/admin.html"'), 'Netlify must preserve direct employee and admin workspace routes']
+];
+for (const [passed, message] of netlifyChecks) {
+  if (!passed) errors.push(`Netlify deployment configuration check failed: ${message}`);
+}
+
 const employeeSource = await read('employee.js');
 const adminSource = await read('admin.js');
 const enterpriseAdminSource = await read('enterprise-admin.js');
