@@ -21,6 +21,7 @@ let ticketCache = {};
 let announcementCache = {};
 let auditCache = {};
 let shiftCache = {};
+let correctionCache = {};
 let offSelectedMessages = () => {};
 $('signIn').onclick = async () => {
   const button = $('signIn');
@@ -108,6 +109,7 @@ async function loadDashboardData(user) {
       $('messageEmployee').replaceChildren(new Option('Select employee', ''));
       const recordSelection = $('recordEmployee').value;
       $('recordEmployee').replaceChildren(new Option('Select worker', ''));
+      $('attendanceCorrectionEmployee').replaceChildren(new Option('Select employee', ''));
 
 
       for (const [uid, profile] of Object.entries(employees)) {
@@ -177,6 +179,7 @@ async function loadDashboardData(user) {
           $('assignee').add(new Option(profile.name || uid, uid));
           $('adminTicketAssignee').add(new Option(profile.name || uid, uid));
           $('messageEmployee').add(new Option(profile.name || uid, uid));
+          $('attendanceCorrectionEmployee').add(new Option(profile.name || uid, uid));
         }
         $('recordEmployee').add(new Option((isActive ? '' : '[Inactive] ') + (profile.name || uid), uid));
       }
@@ -236,6 +239,10 @@ async function loadDashboardData(user) {
       renderGpsLocations();
       renderWorkerRecords();
     }, error => databaseError(error, 'attendance / shifts')));
+    unsub.push(onValue(ref(db, 'attendanceCorrections'), snap => {
+      correctionCache = snap.val() || {};
+      renderAttendanceCorrections();
+    }, error => databaseError(error, 'attendance corrections')));
 
   } catch (e) {
     $('actionError').textContent =
@@ -281,6 +288,65 @@ onAuthStateChanged(auth, async user => {
   }
 });
 
+
+
+function renderAttendanceCorrections() {
+  const box = $('attendanceCorrectionList');
+  if (!box) return;
+  box.replaceChildren();
+  const entries = [];
+  for (const [uid, records] of Object.entries(correctionCache || {})) {
+    for (const [id, record] of Object.entries(records || {})) entries.push({uid,id,record});
+  }
+  entries.sort((a,b) => (b.record.createdAt || 0) - (a.record.createdAt || 0));
+  if (!entries.length) { box.textContent = 'No attendance corrections have been recorded.'; return; }
+  for (const item of entries) {
+    const card = document.createElement('article');
+    card.className = 'border-b py-3';
+    const title = document.createElement('strong');
+    title.textContent = (employees[item.uid]?.name || item.uid) + ' · ' + item.record.workDate;
+    const times = document.createElement('p');
+    times.className = 'text-sm text-slate-600 mt-1';
+    times.textContent = 'Corrected start: ' + (item.record.correctedStart || 'unchanged') + ' · Corrected end: ' + (item.record.correctedEnd || 'unchanged');
+    const reason = document.createElement('p');
+    reason.className = 'text-sm mt-1';
+    reason.textContent = 'Reason: ' + item.record.reason + ' · Recorded by ' + (employees[item.record.createdBy]?.name || item.record.createdBy || 'admin');
+    card.append(title,times,reason);
+    box.append(card);
+  }
+}
+$('attendanceCorrectionDate').value = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+$('attendanceCorrectionForm')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  const user = auth.currentUser;
+  if (!user) return;
+  const uid = $('attendanceCorrectionEmployee').value;
+  const workDate = $('attendanceCorrectionDate').value;
+  const correctedStart = $('attendanceCorrectionStart').value;
+  const correctedEnd = $('attendanceCorrectionEnd').value;
+  const reason = $('attendanceCorrectionReason').value.trim();
+  if (!uid || !workDate || (!correctedStart && !correctedEnd) || !reason) {
+    $('attendanceCorrectionFeedback').textContent = 'Choose an employee and date, enter at least one corrected time, and explain the reason.';
+    return;
+  }
+  const button = $('attendanceCorrectionForm').querySelector('button[type="submit"], button:not([type])');
+  if (button) button.disabled = true;
+  try {
+    await set(push(ref(db, 'attendanceCorrections/' + uid)), {
+      workDate, correctedStart, correctedEnd, reason,
+      createdAt: serverTimestamp(), createdBy: user.uid
+    });
+    await writeAudit('attendance.correction_recorded', uid + '/' + workDate);
+    $('attendanceCorrectionForm').reset();
+    $('attendanceCorrectionDate').value = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    $('attendanceCorrectionFeedback').textContent = 'Correction recorded separately. The original shift event remains unchanged.';
+    $('actionError').textContent = '';
+  } catch {
+    $('attendanceCorrectionFeedback').textContent = 'Could not save correction. Verify the attendanceCorrections rules.';
+  } finally {
+    if (button) button.disabled = false;
+  }
+});
 
 function renderGpsLocations() {
   const box = $('gpsMapList');
