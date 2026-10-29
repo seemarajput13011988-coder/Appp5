@@ -55,6 +55,7 @@ onAuthStateChanged(auth, async user => {
   try {
     const profileSnap = await get(ref(db, 'profiles/' + user.uid));
     const profile = profileSnap.val();
+    if (auth.currentUser?.uid !== user.uid) return;
     if (!profile || profile.role !== 'admin' || profile.active === false || profile.disabled === true) return;
     activeUid = user.uid;
     unsubscribers.push(onValue(ref(db, 'customers'), snap => {
