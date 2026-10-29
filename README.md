@@ -32,6 +32,7 @@ npm run desktop:dev
 ## Admin modules added on the foundation branch
 
 - **Customer CRM:** add and edit ISP customer contact, address, plan and status records; export the directory to CSV.
+- **Plans & renewals:** connect a subscription to a CRM customer, record monthly price and connection/device reference, track status, flag renewals due within seven days or overdue, and export to CSV.
 - **Finance ledger:** record income and expenses in paise, show totals from recorded entries, and export the ledger to CSV. It is not yet a full double-entry accounting system or audited P&L.
 - **Inventory:** maintain stock items, SKU codes, quantities and low-stock thresholds; adjust stock and export to CSV.
 - **Employee requests:** employees can submit leave, expense reimbursement, or salary-advance requests; admins can approve/decline with a recorded review and audit event.
