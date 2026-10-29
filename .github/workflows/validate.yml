@@ -5,21 +5,10 @@ on:
     branches:
       - enterprise-os/foundation
     paths:
-      - '**.js'
-      - '**.mjs'
-      - '**.cjs'
-      - '**.json'
-      - '**.html'
-      - 'database.rules.json'
-      - '.github/workflows/validate.yml'
+      - '**'
   pull_request:
     paths:
-      - '**.js'
-      - '**.mjs'
-      - '**.cjs'
-      - '**.json'
-      - '**.html'
-      - 'database.rules.json'
+      - '**'
 
 permissions:
   contents: read
