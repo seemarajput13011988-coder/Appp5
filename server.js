@@ -1,56 +1,70 @@
-const http = require('http');
+const http = require('node:http');
+const fs = require('node:fs');
+const path = require('node:path');
 
 const hostname = '0.0.0.0';
-const port = process.env.PORT || 3000;
+const port = Number(process.env.PORT) || 3000;
+const root = path.resolve(__dirname);
+const types = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.ico': 'image/x-icon'
+};
 
 const server = http.createServer((req, res) => {
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    res.writeHead(405, { Allow: 'GET, HEAD', 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Method not allowed');
+    return;
+  }
 
-  res.end(`
-    <!doctype html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Appp5</title>
-        <style>
-          body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f3f4f6;
-            color: #111827;
-            display: grid;
-            place-items: center;
-            min-height: 100vh;
-          }
-          .card {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem 2.5rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-            text-align: center;
-          }
-          h1 {
-            margin: 0 0 0.5rem;
-            font-size: 2rem;
-          }
-          p {
-            margin: 0;
-            color: #4b5563;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="card">
-          <h1>Welcome to Appp5</h1>
-          <p>This project is ready for ChatGPT editing and further development.</p>
-        </div>
-      </body>
-    </html>
-  `);
+  let pathname;
+  try {
+    pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+  } catch {
+    res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Bad request');
+    return;
+  }
+  if (pathname === '/') pathname = '/index.html';
+
+  const filePath = path.resolve(root, '.' + pathname);
+  if (filePath !== root && !filePath.startsWith(root + path.sep)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Forbidden');
+    return;
+  }
+
+  fs.stat(filePath, (statError, stat) => {
+    if (statError || !stat.isFile()) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end('Not found');
+      return;
+    }
+
+    const headers = {
+      'Content-Type': types[path.extname(filePath).toLowerCase()] || 'application/octet-stream',
+      'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Cache-Control': /\.(html|js|mjs|webmanifest)$/.test(filePath) ? 'no-cache' : 'public, max-age=3600'
+    };
+    res.writeHead(200, headers);
+    if (req.method === 'HEAD') {
+      res.end();
+      return;
+    }
+    fs.createReadStream(filePath).pipe(res);
+  });
 });
 
 server.listen(port, hostname, () => {
-  console.log(`Appp5 is running at http://localhost:${port}`);
+  console.log(`K&B Enterprise OS is available at http://localhost:${port}`);
 });
