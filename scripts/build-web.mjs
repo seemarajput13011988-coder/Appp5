@@ -9,6 +9,7 @@ const files = [
   'admin.html',
   'employee.js',
   'admin.js',
+  'enterprise-admin.js',
   'firebase.js',
   'manifest.webmanifest',
   'icon.svg',
