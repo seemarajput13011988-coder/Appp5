@@ -43,6 +43,8 @@ function renderRequests(data) {
 onAuthStateChanged(auth, async user => {
   stopRequests();
   currentUid = null;
+  renderRequests({});
+  $('employeeRequestFeedback').textContent = '';
   if (!user) return;
   try {
     const snap = await get(ref(db, 'profiles/' + user.uid));
