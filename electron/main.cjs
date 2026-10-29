@@ -17,7 +17,7 @@ function createWindow() {
     }
   });
 
-  window.loadFile(path.join(__dirname, '..', 'dist', 'app.html'));
+  window.loadFile(path.join(__dirname, '..', 'dist', 'launcher.html'));
   window.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https://')) shell.openExternal(url);
     return { action: 'deny' };
