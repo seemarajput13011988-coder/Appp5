@@ -3,6 +3,7 @@ import { app, auth, db } from './firebase.js';
 
 import {
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signInWithCustomToken,
   sendPasswordResetEmail,
   signOut,
@@ -75,8 +76,50 @@ let offRequests = () => {};
 let offTickets = () => {};
 let offAnnouncements = () => {};
 let offMessages = () => {};
+let offApproval = () => {};
+$('approvalSignOut').onclick = () => signOut(auth);
 
 let userId = null;
+let pendingRegistrationName = '';
+$('signupForm').onsubmit = async event => {
+  event.preventDefault();
+  const name = $('signupName').value.trim();
+  const password = $('signupPassword').value;
+  if (!name) { $('loginError').textContent = 'Enter your full name.'; return; }
+  if (password !== $('signupConfirm').value) { $('loginError').textContent = 'Passwords do not match.'; return; }
+  const button = $('signupButton'); button.disabled = true;
+  pendingRegistrationName = name;
+  $('loginError').textContent = 'Creating your account…';
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+    await createUserWithEmailAndPassword(auth, $('signupEmail').value.trim(), password);
+  } catch (error) {
+    pendingRegistrationName = '';
+    $('loginError').textContent = authErrorMessage(error.code);
+  } finally { button.disabled = false; }
+};
+let workerShifts = {};
+function workDate(ts) {
+  if (!Number.isFinite(ts)) return '';
+  const parts = new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(ts));
+  const part = type => parts.find(p => p.type === type)?.value || '';
+  return part('year')+'-'+part('month')+'-'+part('day');
+}
+function showDailyAttendance() {
+  const day = $('workerHistoryDate').value;
+  const box = $('workerHistoryList'); box.replaceChildren();
+  const entries = Object.values(workerShifts).filter(s => workDate(s.startedAt) === day).sort((a,b)=>(b.startedAt||0)-(a.startedAt||0));
+  if (!entries.length) { box.textContent='No attendance records for this date.'; return; }
+  const time = ts => Number.isFinite(ts) ? new Date(ts).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}) : '—';
+  for (const shift of entries) {
+    const row = document.createElement('article'); row.className='task';
+    row.textContent='Start: '+time(shift.startedAt)+' · End: '+time(shift.endedAt)+' · '+(shift.status||'Unknown');
+    box.append(row);
+  }
+}
+$('workerHistoryDate').value = workDate(Date.now());
+$('workerHistoryDate').onchange = showDailyAttendance;
+
 let shiftActive = false;
 let activeShiftId = null;
 let employeeTasks = [];
@@ -170,6 +213,9 @@ $('googleSignIn').onclick = async () => {
 };
 
 function authErrorMessage(code) {
+  if (code === 'auth/email-already-in-use') return 'This email already has an account. Use Sign in or Reset password.';
+  if (code === 'auth/weak-password') return 'Choose a stronger password (at least 6 characters).';
+  if (code === 'auth/invalid-email') return 'Enter a valid email address.';
   if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') return 'Email or password is incorrect.';
   if (code === 'auth/user-disabled') return 'This account is deactivated. Contact your administrator.';
   if (code === 'auth/too-many-requests') return 'Too many sign-in attempts. Wait a while and try again.';
@@ -186,13 +232,15 @@ onAuthStateChanged(auth, async user => {
   offTickets();
   offAnnouncements();
   offMessages();
+  offApproval();
   userId = null;
+  $('approvalStatus').classList.add('hidden');
 
   if (!user) {
     $('authLoading').classList.add('hidden');
     $('login').classList.remove('hidden');
     $('workspace').classList.add('hidden');
-    loadLoginTeams();
+    $('approvalStatus').classList.add('hidden');
     return;
   }
 
@@ -215,15 +263,36 @@ onAuthStateChanged(auth, async user => {
       if (!existing.exists()) {
         await set(requestRef, {
           email: user.email || '',
-          name: user.displayName || user.email || 'New employee',
+          name: pendingRegistrationName || user.displayName || user.email || 'New employee',
           state: 'pending',
           createdAt: serverTimestamp()
         });
       }
-      await signOut(auth);
-      $('loginError').textContent = existing.val()?.state === 'rejected'
-        ? 'Your access request was declined. Please contact your administrator.'
-        : 'Access request submitted. An administrator must approve your account.';
+      pendingRegistrationName = '';
+      $('authLoading').classList.add('hidden');
+      $('approvalStatus').classList.remove('hidden');
+      $('approvalAccount').textContent = user.email || 'Your employee account';
+      const displayApproval = request => {
+        const state = request?.state || 'pending';
+        $('approvalStep1').className = 'approval-step done';
+        $('approvalStep2').className = 'approval-step ' + (state === 'pending' ? 'current' : state === 'approved' ? 'done' : '');
+        $('approvalStep3').className = 'approval-step ' + (state === 'approved' ? 'current' : '');
+        $('approvalMessage').textContent = state === 'approved'
+          ? 'Approved! Opening your employee workspace…'
+          : state === 'rejected'
+            ? 'Your request was declined. Contact your administrator for details.'
+            : 'Your account is created. Waiting for administrator approval. This page updates automatically.';
+        if (state === 'approved') {
+          get(ref(db, `profiles/${user.uid}`)).then(snap => {
+            if (snap.exists() && auth.currentUser?.uid === user.uid) window.location.reload();
+            else $('approvalMessage').textContent = 'Approved, but your employee profile is missing. Ask the administrator to approve again or check Firebase permissions.';
+          }).catch(() => { $('approvalMessage').textContent = 'Approved. Could not verify employee profile. Please retry shortly.'; });
+        }
+      };
+      displayApproval(existing.val());
+      offApproval = onValue(requestRef, snap => displayApproval(snap.val()), error => {
+        $('approvalMessage').textContent = 'Unable to read approval status: ' + (error?.message || 'Check Firebase database permissions.');
+      });
       return;
     }
 
@@ -240,6 +309,22 @@ onAuthStateChanged(auth, async user => {
     }
 
     userId = user.uid;
+    const approvalRef = ref(db, `accessRequests/${user.uid}`);
+    offApproval = onValue(approvalRef, snap => {
+      const request = snap.val();
+      if (!request) return;
+      const state = request.state || 'pending';
+      $('workerApprovalTracker').classList.remove('hidden');
+      $('workerApprovalBadge').textContent = state === 'approved' ? 'Approved' : state === 'rejected' ? 'Declined' : 'Pending review';
+      $('workerApprovalBadge').className = 'approval-badge' + (state === 'pending' ? ' pending' : state === 'rejected' ? ' rejected' : '');
+      $('workerApprovalStep1').className = 'approval-step done';
+      $('workerApprovalStep2').className = 'approval-step ' + (state === 'pending' ? 'current' : state === 'approved' ? 'done' : '');
+      $('workerApprovalStep3').className = 'approval-step ' + (state === 'approved' ? 'done' : '');
+      $('workerApprovalNote').textContent = state === 'approved' ? 'Your account is approved and your employee workspace is active.' : state === 'pending' ? 'Your request is waiting for administrator review.' : 'Your request was declined. Contact your administrator.';
+    }, error => {
+      $('workerApprovalTracker').classList.remove('hidden');
+      $('workerApprovalNote').textContent = 'Could not refresh approval status. Check your internet connection.';
+    });
     $('userName').textContent = profile.name || user.email;
 
     $('login').classList.add('hidden');
@@ -249,19 +334,27 @@ onAuthStateChanged(auth, async user => {
       const shifts = Object.values(snap.val() || {})
         .sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0));
       const shiftData = snap.val() || {};
+      workerShifts = shiftData;
+      showDailyAttendance();
       cacheValue(`shifts:${userId}`, Object.fromEntries(Object.entries(shiftData).map(([id, shift]) => [id, { status: shift.status, startedAt: shift.startedAt, endedAt: shift.endedAt }]))).catch(() => {});
 
-      shiftActive = shifts[0]?.status === 'active';
-      activeShiftId = shiftActive
-        ? Object.entries(snap.val() || {}).find(([, shift]) => shift.status === 'active')?.[0] || null
-        : null;
+      const active = Object.entries(shiftData).filter(([, shift]) => shift.status === 'active').sort((a,b) => (b[1].startedAt || 0) - (a[1].startedAt || 0));
+      shiftActive = active.length > 0;
+      activeShiftId = active[0]?.[0] || null;
+      $('startShift').disabled = shiftActive;
+      $('endShift').disabled = !shiftActive;
 
       $('shiftStatus').textContent =
         shiftActive ? 'On duty' : 'Off duty';
     }, async () => {
       const cached = await readCache(`shifts:${userId}`).catch(() => ({}));
+      workerShifts = cached || {};
+      showDailyAttendance();
       const shifts = Object.values(cached || {}).sort((a,b)=>(b.startedAt||0)-(a.startedAt||0));
-      shiftActive = shifts[0]?.status === 'active';
+      shiftActive = shifts.some(shift => shift.status === 'active');
+      activeShiftId = null;
+      $('startShift').disabled = true;
+      $('endShift').disabled = true;
       $('shiftStatus').textContent = `${shiftActive ? 'On duty' : 'Off duty'} · offline copy`;
     });
 
@@ -303,7 +396,8 @@ onAuthStateChanged(auth, async user => {
 });
 
 $('startShift').onclick = async () => {
-  if (!userId || shiftActive) return;
+  if (!userId || shiftActive || $('startShift').disabled) return;
+  $('startShift').disabled = true;
 
   try {
     $('actionError').textContent = '';
@@ -317,7 +411,9 @@ $('startShift').onclick = async () => {
     });
 
   } catch (e) {
-    $('actionError').textContent = 'Could not start shift.';
+    $('actionError').textContent = 'Could not start shift. Check connection and access.';
+  } finally {
+    if (!shiftActive) $('startShift').disabled = false;
   }
 };
 
@@ -339,12 +435,31 @@ $('endShift').onclick = () => {
 };
 
 function getOptionalLocation() {
+  const status = $('gpsStatus');
   return new Promise(resolve => {
-    if (!navigator.geolocation) return resolve(null);
+    if (!navigator.geolocation) {
+      status.textContent = 'GPS unavailable: this browser does not support location services.';
+      return resolve(null);
+    }
+    if (!window.isSecureContext) {
+      status.textContent = 'GPS needs a secure HTTPS connection (or localhost).';
+      return resolve(null);
+    }
+    status.textContent = 'Requesting one-time location permission…';
     navigator.geolocation.getCurrentPosition(
-      position => resolve({ latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: Math.round(position.coords.accuracy), capturedAt: Date.now() }),
-      () => resolve(null),
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+      position => {
+        const location = { latitude: position.coords.latitude, longitude: position.coords.longitude, accuracy: Math.round(position.coords.accuracy), capturedAt: Date.now() };
+        status.textContent = 'GPS captured · accuracy ±' + location.accuracy + ' m · ' + location.latitude.toFixed(5) + ', ' + location.longitude.toFixed(5);
+        return resolve(location);
+      },
+      error => {
+        const message = error.code === 1 ? 'Location permission denied. Allow location access in your browser settings.' :
+          error.code === 2 ? 'Your device could not determine a location. Check device location services.' :
+          'Location request timed out. Try again where GPS reception is better.';
+        status.textContent = message + ' Attendance can continue, but no GPS point was saved.';
+        return resolve(null);
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
   });
 }
@@ -392,15 +507,36 @@ function renderAnnouncements(data) {
 
 function renderMessages(data) {
   const box = $('employeeMessages'); box.replaceChildren();
-  for (const item of Object.values(data).sort((a,b) => (a.createdAt || 0) - (b.createdAt || 0))) {
-    const row = document.createElement('p'); row.textContent = `${item.senderRole === 'admin' ? 'Admin' : 'You'}: ${item.text}`; box.append(row);
+  const messages = Object.values(data).sort((a,b) => (a.createdAt || 0) - (b.createdAt || 0));
+  if (!messages.length) {
+    const empty = document.createElement('p'); empty.className = 'muted';
+    empty.textContent = 'No messages yet. You can contact your administrator here.';
+    box.append(empty); return;
   }
+  for (const item of messages) {
+    const mine = item.senderRole === 'employee';
+    const bubble = document.createElement('article');
+    bubble.className = 'chat-message' + (mine ? ' mine' : '');
+    const meta = document.createElement('div'); meta.className = 'chat-meta';
+    const when = typeof item.createdAt === 'number' ? ' · ' + new Date(item.createdAt).toLocaleString('en-IN') : '';
+    meta.textContent = (mine ? 'You' : 'Administrator') + when;
+    const body = document.createElement('p'); body.textContent = item.text || '';
+    bubble.append(meta,body); box.append(bubble);
+  }
+  box.scrollTop = box.scrollHeight;
 }
-
 $('employeeMessageForm').onsubmit = async event => {
   event.preventDefault();
-  try { await set(push(ref(db, `messages/${userId}`)), { text: $('employeeMessageText').value.trim(), senderUid: userId, senderRole: 'employee', createdAt: serverTimestamp() }); $('employeeMessageText').value = ''; }
-  catch { $('actionError').textContent = 'Could not send message.'; }
+  const message = $('employeeMessageText').value.trim();
+  if (!userId || !message) return;
+  const button = $('employeeMessageForm').querySelector('button');
+  button.disabled = true;
+  try {
+    await set(push(ref(db, `messages/${userId}`)), { text:message, senderUid:userId, senderRole:'employee', createdAt:serverTimestamp() });
+    $('employeeMessageText').value = '';
+    $('actionError').textContent = '';
+  } catch (error) { showDbError(error); }
+  finally { button.disabled = false; }
 };
 
 async function updateConnectionStatus() {

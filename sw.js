@@ -1,4 +1,4 @@
-const CACHE = 'kb-workforce-shell-v1';
+const CACHE = 'kb-workforce-shell-v2';
 const SHELL = ['./', './index.html', './admin.html', './employee.js', './admin.js', './firebase.js', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', event => {

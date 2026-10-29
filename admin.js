@@ -71,6 +71,7 @@ for (const button of document.querySelectorAll('.nav')) {
 
     document.querySelectorAll('.nav').forEach(el => {
       el.classList.toggle('bg-indigo-600', el === button);
+      if (el === button) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
     });
 
     $('pageTitle').textContent =
@@ -105,6 +106,9 @@ async function loadDashboardData(user) {
       );
       $('adminTicketAssignee').replaceChildren(new Option('Assign employee', ''));
       $('messageEmployee').replaceChildren(new Option('Select employee', ''));
+      const recordSelection = $('recordEmployee').value;
+      $('recordEmployee').replaceChildren(new Option('Select worker', ''));
+
 
       for (const [uid, profile] of Object.entries(employees)) {
         $('employeeList').append(
@@ -116,29 +120,35 @@ async function loadDashboardData(user) {
         );
       $('adminTicketAssignee').add(new Option(profile.name || uid, uid));
       $('messageEmployee').add(new Option(profile.name || uid, uid));
+      $('recordEmployee').add(new Option(profile.name || uid, uid));
       }
 
+      if (employees[recordSelection]) $('recordEmployee').value = recordSelection;
+      renderWorkerRecords();
       renderTaskReviews();
-    }));
+      renderTeamManagement();
+      renderGpsLocations();
+    }, error => databaseError(error, 'employee profiles')));
 
     unsub.push(onValue(ref(db, 'tasks'), snap => {
       tasksCache = snap.val() || {};
       $('taskCount').textContent =
         Object.keys(tasksCache).length;
       renderTaskReviews();
-    }));
+      renderWorkerRecords();
+    }, error => databaseError(error, 'tasks')));
 
     unsub.push(onValue(ref(db, 'taskRequests'), snap => {
       requestsCache = snap.val() || {};
       renderTaskReviews();
-    }));
+    }, error => databaseError(error, 'task requests')));
 
     unsub.push(onValue(ref(db, 'accessRequests'), snap => {
       accessCache = snap.val() || {};
       renderAccessRequests();
-    }));
+    }, error => databaseError(error, 'access requests')));
 
-    unsub.push(onValue(ref(db, 'tickets'), snap => { ticketCache = snap.val() || {}; $('ticketCount').textContent = Object.keys(ticketCache).length; renderTickets(); }, databaseError));
+    unsub.push(onValue(ref(db, 'tickets'), snap => { ticketCache = snap.val() || {}; $('ticketCount').textContent = Object.keys(ticketCache).length; renderTickets(); renderWorkerRecords(); }, databaseError));
     unsub.push(onValue(ref(db, 'announcements'), snap => { announcementCache = snap.val() || {}; renderAnnouncementList(); }, databaseError));
     unsub.push(onValue(ref(db, 'auditLogs'), snap => { auditCache = snap.val() || {}; renderAudit(); }, databaseError));
 
@@ -165,7 +175,9 @@ async function loadDashboardData(user) {
 
       $('activeCount').textContent = active;
       $('attendanceList').replaceChildren(...rows);
-    }));
+      renderGpsLocations();
+      renderWorkerRecords();
+    }, error => databaseError(error, 'attendance / shifts')));
 
   } catch (e) {
     $('actionError').textContent =
@@ -183,20 +195,208 @@ onAuthStateChanged(auth, async user => {
   }
   try {
     const profileSnapshot = await get(ref(db, `profiles/${user.uid}`));
-    if (profileSnapshot.val()?.role !== 'admin' || profileSnapshot.val()?.active === false || profileSnapshot.val()?.disabled === true) {
+    if (!profileSnapshot.exists()) {
       await signOut(auth);
-      $('loginError').textContent = 'Admin access required. This account may be inactive or not assigned the admin role.';
+      $('loginError').textContent = 'Your Firebase Authentication account signed in, but its database profile is missing. In Firebase Console, find your own account under Authentication > Users and confirm a matching profiles/<UID> record exists with role set to "admin".';
+      return;
+    }
+    const profile = profileSnapshot.val();
+    if (profile?.role !== 'admin' || profile?.active === false || profile?.disabled === true) {
+      await signOut(auth);
+      $('loginError').textContent = 'Your database profile exists, but admin access is not enabled. Confirm role is "admin" and the profile is active for your own administrator account.';
       return;
     }
     $('login').classList.add('hidden');
     $('dashboard').classList.remove('hidden');
     $('adminEmail').textContent = user.email || 'Administrator';
     await loadDashboardData(user);
-  } catch {
-    $('loginError').textContent = 'Unable to verify admin access. Check Firebase rules and connectivity.';
+  } catch (e) {
+    const code = String(e?.code || 'unknown').replace(/^database\//, '');
     await signOut(auth);
+    if (code.toUpperCase().includes('PERMISSION_DENIED')) {
+      $('loginError').textContent = 'Firebase denied access to your admin profile. Confirm that your signed-in account has a profiles/<UID> record with role set to "admin", and that the deployed database rules allow users to read their own profile.';
+    } else if (code.toUpperCase().includes('NETWORK')) {
+      $('loginError').textContent = 'Could not reach Firebase to verify admin access. Check your internet connection and Firebase project status.';
+    } else {
+      $('loginError').textContent = 'Unable to verify admin access (' + code + '). Check the admin profile record, deployed database rules, and Firebase connectivity.';
+    }
   }
 });
+
+
+function renderGpsLocations() {
+  const box = $('gpsMapList');
+  if (!box) return;
+  box.replaceChildren();
+  const locations = [];
+  for (const [uid, records] of Object.entries(shiftCache)) {
+    for (const [shiftId, shift] of Object.entries(records || {})) {
+      for (const [kind, location] of [['Shift start', shift.location], ['Shift end', shift.endLocation]]) {
+        if (!location || !Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) continue;
+        locations.push({
+          uid, shiftId, kind, location,
+          name: employees[uid]?.name || uid,
+          team: employees[uid]?.team || 'Unassigned',
+          timestamp: kind === 'Shift start' ? shift.startedAt : shift.endedAt
+        });
+      }
+    }
+  }
+  locations.sort((a,b) => (b.location.capturedAt || b.timestamp || 0) - (a.location.capturedAt || a.timestamp || 0));
+  $('gpsMapSummary').textContent = locations.length
+    ? locations.length + ' recorded GPS point' + (locations.length === 1 ? '' : 's') + ' · newest first'
+    : 'No GPS points recorded yet. Workers must allow location access during a shift action.';
+  if (!locations.length) {
+    const empty = document.createElement('p');
+    empty.className = 'muted mt-3';
+    empty.textContent = 'No location data available.';
+    box.append(empty);
+    return;
+  }
+  for (const item of locations) {
+    const lat = item.location.latitude, lon = item.location.longitude;
+    const card = document.createElement('article');
+    card.className = 'gps-card';
+    const title = document.createElement('h3');
+    title.className = 'font-bold';
+    title.textContent = item.name + ' · ' + item.kind;
+    const team = document.createElement('p');
+    team.className = 'muted text-sm mt-1';
+    team.textContent = 'Team: ' + item.team;
+    const pill = document.createElement('span');
+    pill.className = 'gps-pill';
+    pill.textContent = item.location.accuracy ? 'Accuracy ±' + Math.round(item.location.accuracy) + ' m' : 'Accuracy not reported';
+    const time = document.createElement('p');
+    time.className = 'muted text-sm mt-2';
+    const timestamp = item.location.capturedAt || item.timestamp;
+    time.textContent = 'Recorded: ' + (timestamp ? new Date(timestamp).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}) : 'time unavailable');
+    const coordinates = document.createElement('p');
+    coordinates.className = 'text-sm mt-2';
+    coordinates.textContent = lat.toFixed(6) + ', ' + lon.toFixed(6);
+    const link = document.createElement('a');
+    link.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(lat + ',' + lon);
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = 'Open in Google Maps';
+    const map = document.createElement('iframe');
+    map.src = 'https://maps.google.com/maps?q=' + encodeURIComponent(lat + ',' + lon) + '&z=16&output=embed';
+    map.loading = 'lazy';
+    map.title = 'Recorded location for ' + item.name;
+    map.referrerPolicy = 'no-referrer';
+    card.append(title,team,pill,time,coordinates,link,map);
+    box.append(card);
+  }
+}
+
+
+function indiaDate(timestamp) {
+  if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(timestamp));
+  const get = type => parts.find(part => part.type === type)?.value || '';
+  return get('year') + '-' + get('month') + '-' + get('day');
+}
+function workerRecordCard(title, items, format) {
+  const article = document.createElement('article');
+  const heading = document.createElement('h3'); heading.textContent = title + ' (' + items.length + ')';
+  article.append(heading);
+  if (!items.length) { const empty = document.createElement('p'); empty.className='muted'; empty.textContent='No records for this date.'; article.append(empty); }
+  for (const item of items) { const row = document.createElement('p'); row.textContent = format(item); article.append(row); }
+  return article;
+}
+function renderWorkerRecords() {
+  const uid = $('recordEmployee')?.value;
+  const day = $('recordDate')?.value;
+  const summary = $('workerRecordSummary'), details = $('workerRecordDetails');
+  if (!summary || !details) return;
+  details.replaceChildren();
+  if (!uid || !employees[uid]) { summary.textContent = 'Select a worker to view individual records.'; return; }
+  if (!day) { summary.textContent = 'Choose a work date.'; return; }
+  const profile = employees[uid];
+  const shifts = Object.values(shiftCache[uid] || {}).filter(s => indiaDate(s.startedAt) === day);
+  const tasks = Object.values(tasksCache).filter(t => (t.assignedTo === uid || t.assigneeUid === uid || t.employeeUid === uid) && indiaDate(t.createdAt || t.assignedAt || t.startedAt) === day);
+  const tickets = Object.values(ticketCache).filter(t => (t.assignedTo === uid || t.assigneeUid === uid || t.employeeUid === uid || t.createdBy === uid) && indiaDate(t.createdAt) === day);
+  summary.textContent = (profile.name || uid) + ' · ' + (profile.team || 'Unassigned') + ' · ' + day + ' · ' + shifts.length + ' shifts, ' + tasks.length + ' tasks, ' + tickets.length + ' tickets';
+  const fmt = ts => typeof ts === 'number' ? new Date(ts).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}) : '—';
+  details.append(
+    workerRecordCard('Attendance',shifts,s => 'Start: '+fmt(s.startedAt)+' · End: '+fmt(s.endedAt)+' · '+(s.status || 'Unknown')),
+    workerRecordCard('Tasks created on this date',tasks,t => (t.title || 'Task')+' · '+(t.status || 'Pending')),
+    workerRecordCard('Tickets created on this date',tickets,t => (t.customer || t.customerName || t.title || 'Ticket')+' · '+(t.status || 'Open'))
+  );
+}
+$('recordEmployee').onchange = renderWorkerRecords;
+$('recordDate').onchange = renderWorkerRecords;
+$('recordDate').value = indiaDate(Date.now());
+
+function renderTeamManagement() {
+  const employeeSelect = $('teamEmployee');
+  const selectedUid = employeeSelect.value;
+  employeeSelect.replaceChildren(new Option('Select employee', ''));
+  for (const [uid, profile] of Object.entries(employees).sort((a, b) =>
+    String(a[1].name || a[0]).localeCompare(String(b[1].name || b[0]))
+  )) {
+    employeeSelect.add(new Option(profile.name || uid, uid));
+  }
+  if (employees[selectedUid]) employeeSelect.value = selectedUid;
+
+  const groups = Object.create(null);
+  for (const [uid, profile] of Object.entries(employees)) {
+    const team = String(profile.team || 'Unassigned').trim() || 'Unassigned';
+    if (!groups[team]) groups[team] = [];
+    groups[team].push({ uid, name: profile.name || uid, email: profile.email || '' });
+  }
+
+  const box = $('teamList');
+  box.replaceChildren();
+  for (const [team, members] of Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]))) {
+    const section = document.createElement('section');
+    section.className = 'border rounded-xl p-4 mb-3';
+    const heading = document.createElement('h3');
+    heading.className = 'font-bold';
+    heading.textContent = team + ' · ' + members.length + (members.length === 1 ? ' employee' : ' employees');
+    const list = document.createElement('div');
+    list.className = 'mt-2';
+    for (const member of members.sort((a, b) => a.name.localeCompare(b.name))) {
+      const row = document.createElement('p');
+      row.className = 'list-row';
+      row.textContent = member.name + (member.email ? ' · ' + member.email : '');
+      list.append(row);
+    }
+    section.append(heading, list);
+    box.append(section);
+  }
+  if (!Object.keys(employees).length) box.textContent = 'No employee profiles found.';
+}
+
+$('teamEmployee').onchange = () => {
+  const uid = $('teamEmployee').value;
+  $('teamName').value = employees[uid]?.team || '';
+  $('teamFeedback').textContent = '';
+};
+
+$('teamAssignmentForm').onsubmit = async event => {
+  event.preventDefault();
+  const uid = $('teamEmployee').value;
+  const team = $('teamName').value.trim();
+  if (!uid || !employees[uid] || !team) {
+    $('teamFeedback').textContent = 'Choose an employee and enter a team name.';
+    return;
+  }
+
+  const button = $('teamAssignmentForm').querySelector('button[type="submit"]');
+  button.disabled = true;
+  $('teamFeedback').textContent = '';
+  $('actionError').textContent = '';
+  try {
+    await update(ref(db, 'profiles/' + uid), { team });
+    await writeAudit('employee.team_assigned', uid + ':' + team);
+    $('teamFeedback').textContent = 'Team assignment saved.';
+  } catch (error) {
+    $('teamFeedback').textContent = 'Could not save the team assignment. Check the admin profile and deployed Firebase rules.';
+    databaseError(error, 'employee team assignment');
+  } finally {
+    button.disabled = false;
+  }
+};
 
 $('taskForm').onsubmit = async event => {
   event.preventDefault();
@@ -264,19 +464,51 @@ function renderAnnouncementList() {
   if (!Object.keys(announcementCache).length) box.textContent='No announcements published.';
 }
 
+function displayAdminMessages(data, uid) {
+  const box = $('adminMessages');
+  box.replaceChildren();
+  const messages = Object.values(data).sort((a,b) => (a.createdAt || 0) - (b.createdAt || 0));
+  if (!messages.length) {
+    const empty = document.createElement('p'); empty.className = 'muted';
+    empty.textContent = 'No messages yet. Send the first message to this employee.';
+    box.append(empty); return;
+  }
+  for (const item of messages) {
+    const mine = item.senderRole === 'admin';
+    const bubble = document.createElement('article');
+    bubble.className = 'chat-message' + (mine ? ' mine' : '');
+    const meta = document.createElement('div'); meta.className = 'chat-meta';
+    const when = typeof item.createdAt === 'number' ? ' · ' + new Date(item.createdAt).toLocaleString('en-IN') : '';
+    meta.textContent = (mine ? 'You' : employees[uid]?.name || 'Employee') + when;
+    const body = document.createElement('p'); body.textContent = item.text || '';
+    bubble.append(meta,body); box.append(bubble);
+  }
+  box.scrollTop = box.scrollHeight;
+}
 $('messageEmployee').onchange = () => {
   offSelectedMessages();
-  const uid = $('messageEmployee').value; $('adminMessages').replaceChildren();
-  if (!uid) return;
-  offSelectedMessages = onValue(ref(db, `messages/${uid}`), snap => {
-    const box=$('adminMessages'); box.replaceChildren();
-    for (const item of Object.values(snap.val() || {}).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0))) { const p=document.createElement('p'); p.textContent=`${item.senderRole === 'admin' ? 'Admin' : employees[uid]?.name || 'Employee'}: ${item.text}`; box.append(p); }
-  }, databaseError);
+  const uid = $('messageEmployee').value;
+  $('adminMessages').replaceChildren();
+  if (!uid) { $('adminMessages').textContent = 'Select an employee to view messages.'; return; }
+  offSelectedMessages = onValue(ref(db, `messages/${uid}`),
+    snap => displayAdminMessages(snap.val() || {}, uid),
+    error => { $('adminMessages').textContent = 'Unable to load messages. Check Firebase access.'; databaseError(error, 'employee messages'); });
 };
 $('adminMessageForm').onsubmit = async event => {
-  event.preventDefault(); const uid=$('messageEmployee').value; if (!uid) return;
-  try { await set(push(ref(db,`messages/${uid}`)), { text:$('adminMessageText').value.trim(), senderUid:auth.currentUser.uid, senderRole:'admin', createdAt:serverTimestamp() }); $('adminMessageText').value=''; await writeAudit('message.sent', uid); }
-  catch { $('actionError').textContent='Could not send message.'; }
+  event.preventDefault();
+  const uid = $('messageEmployee').value;
+  const message = $('adminMessageText').value.trim();
+  if (!uid || !employees[uid]) { $('actionError').textContent = 'Select an employee before sending.'; return; }
+  if (!message) return;
+  const button = $('adminMessageForm').querySelector('button');
+  button.disabled = true;
+  try {
+    await set(push(ref(db,`messages/${uid}`)), { text:message, senderUid:auth.currentUser.uid, senderRole:'admin', createdAt:serverTimestamp() });
+    $('adminMessageText').value = '';
+    $('actionError').textContent = '';
+    try { await writeAudit('message.sent', uid); } catch (auditError) { databaseError(auditError, 'message audit'); }
+  } catch (error) { databaseError(error, 'send employee message'); }
+  finally { button.disabled = false; }
 };
 
 function csvCell(value) { const text = value == null ? '' : String(value); return `"${text.replaceAll('"','""')}"`; }
@@ -298,7 +530,14 @@ document.querySelectorAll('[data-export]').forEach(button => button.onclick = ()
 function formatDate(value) { return value ? new Date(value).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}) : ''; }
 async function writeAudit(action, recordId) { try { await set(push(ref(db,'auditLogs')), { actor:auth.currentUser.uid, action, recordId:String(recordId), createdAt:serverTimestamp() }); } catch { $('actionError').textContent='Action completed but audit log could not be saved.'; } }
 function renderAudit() { const box=$('auditList'); box.replaceChildren(); for (const item of Object.values(auditCache).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,100)) { const p=document.createElement('p'); p.className='list-row'; p.textContent=`${formatDate(item.createdAt)} · ${item.action} · ${item.recordId} · ${item.actor}`; box.append(p); } if (!Object.keys(auditCache).length) box.textContent='No audit events yet.'; }
-function databaseError(error) { $('actionError').textContent = error?.code === 'PERMISSION_DENIED' ? 'Firebase rules denied access. Deploy the updated database rules.' : 'Could not load data. Check your connection.'; }
+function databaseError(error, section = 'data') {
+  const code = String(error?.code || 'unknown').replace(/^database\//, '');
+  if (code.toUpperCase().includes('PERMISSION_DENIED')) {
+    $('actionError').textContent = 'Firebase denied access to ' + section + '. Check the deployed database rules for this data path and confirm your account has the admin role.';
+    return;
+  }
+  $('actionError').textContent = 'Could not load ' + section + ' (' + code + '). Check the network connection and Firebase status.';
+}
 
 function renderTaskReviews() {
   const box = $('taskList');
