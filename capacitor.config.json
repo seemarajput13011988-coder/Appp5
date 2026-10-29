@@ -1,0 +1,11 @@
+{
+  "appId": "in.kandbnetservice.enterprise",
+  "appName": "K&B Enterprise OS",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
