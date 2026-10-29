@@ -1,0 +1,45 @@
+name: Build Windows Desktop App
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'app.html'
+      - 'index.html'
+      - 'admin.html'
+      - 'employee.js'
+      - 'admin.js'
+      - 'firebase.js'
+      - 'manifest.webmanifest'
+      - 'icon.svg'
+      - 'sw.js'
+      - 'scripts/**'
+      - 'electron/**'
+      - 'package.json'
+      - '.github/workflows/windows-desktop.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build desktop app
+        run: |
+          npm install
+          npm run build:web
+          npm run desktop:win
+      - name: Upload Windows app
+        uses: actions/upload-artifact@v4
+        with:
+          name: kb-enterprise-os-windows-portable
+          path: release/*.exe
+          if-no-files-found: error
+          retention-days: 14
