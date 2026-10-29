@@ -54,7 +54,7 @@ for (const [htmlPath, scripts] of htmlPairs) {
 
   for (const scriptPath of scripts) {
     const source = await read(scriptPath);
-    for (const match of source.matchAll(/\\$\\(['"]([^'"]+)['"]\\)/g)) {
+        for (const match of source.matchAll(/\\$\\(['"]([^'"]+)['"]\\)/g)) {
       if (!idSet.has(match[1])) errors.push(`${scriptPath} references missing #${match[1]} in ${htmlPath}`);
     }
   }
