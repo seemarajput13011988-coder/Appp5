@@ -157,6 +157,20 @@
     </div>
 
     <div class="rounded-2xl border p-5">
+      <h3 class="font-bold">My requests</h3>
+      <p class="muted">Submit leave, expense reimbursement, or salary-advance requests and track administrator decisions.</p>
+      <form id="employeeRequestForm" class="grid gap-3 mt-3">
+        <label>Request type<select id="employeeRequestType" required><option value="leave">Leave</option><option value="expense">Expense reimbursement</option><option value="advance">Salary advance</option></select></label>
+        <label>Requested date<input id="employeeRequestDate" type="date" required></label>
+        <label id="employeeRequestAmountWrap" class="hidden">Amount (₹)<input id="employeeRequestAmount" type="number" min="0.01" max="1000000" step="0.01" placeholder="Amount"></label>
+        <label>Details<textarea id="employeeRequestDetails" required maxlength="1000" placeholder="Explain the request, dates, purpose, or receipt reference"></textarea></label>
+        <button id="employeeRequestSubmit" type="submit">Submit request</button>
+      </form>
+      <p id="employeeRequestFeedback" role="status" class="text-sm text-indigo-700 mt-3"></p>
+      <div id="employeeRequestList" class="mt-3"><p class="muted">Your submitted requests will appear here.</p></div>
+    </div>
+
+    <div class="rounded-2xl border p-5">
       <h3 class="font-bold">Announcements</h3><div id="announcements" class="mt-3"></div>
     </div>
 
@@ -173,6 +187,7 @@
 </main>
 
 <script type="module" src="./employee.js"></script>
+<script type="module" src="./employee-requests.js"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));</script>
 </body>
 </html>
