@@ -45,6 +45,8 @@ onAuthStateChanged(auth, async user => {
   currentUid = null;
   renderRequests({});
   $('employeeRequestFeedback').textContent = '';
+  $('employeeRequestForm')?.reset();
+  $('employeeRequestType')?.dispatchEvent(new Event('change'));
   if (!user) return;
   try {
     const snap = await get(ref(db, 'profiles/' + user.uid));
