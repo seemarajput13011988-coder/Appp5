@@ -189,6 +189,7 @@ async function loadDashboardData(user) {
       renderTaskReviews();
       renderTeamManagement();
       renderGpsLocations();
+      renderAttendanceCorrections();
     }, error => databaseError(error, 'employee profiles')));
 
     unsub.push(onValue(ref(db, 'tasks'), snap => {
