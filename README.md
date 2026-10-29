@@ -1,30 +1,38 @@
-# Appp5
+# K&B Enterprise OS
 
-This repository has been initialized so it is easy for ChatGPT or other AI coding assistants to inspect and edit.
+K&B NET SERVICE's employee and admin workspace. The current application uses Firebase Authentication and Realtime Database; employee and administrator access is still controlled by the Firebase profile and database rules.
 
-## What is included
+## Run the web app locally
 
-- A minimal JavaScript app scaffold
-- A simple HTTP server
-- A README with run instructions
-
-## Run locally
+Requirements: Node.js 20 or newer.
 
 ```bash
 npm install
 npm start
 ```
 
-Then open:
+Open `http://localhost:3000`. The root URL opens the employee workspace; `/admin.html` opens the admin command center; `/app.html` is the shared workspace launcher.
 
-```text
-http://localhost:3000
+## Build the Android APK (direct installation)
+
+The repository includes a GitHub Actions workflow named **Build Android APK**. On the `enterprise-os/foundation` branch, open **Actions → Build Android APK → Run workflow**. When it succeeds, download the `kb-enterprise-os-android-debug-apk` artifact and extract the APK.
+
+This is a debug APK for controlled testing and direct sideloading, not a Play Store release. Android may ask each worker to allow installation from the app used to open the APK. Keep APK distribution private to authorized workers. A signed release build, Android location-permission verification, and real-device testing are still required before relying on it for official attendance.
+
+## Build the Windows desktop app
+
+The **Build Windows Desktop App** workflow packages a portable Windows x64 executable. Run it from **Actions** and download the `kb-enterprise-os-windows-portable` artifact after a successful build.
+
+For local desktop development:
+
+```bash
+npm run desktop:dev
 ```
 
-## Files
+## Important current limitations
 
-- `server.js` — application logic
-- `package.json` — project metadata and scripts
-- `.gitignore` — ignores local dependencies and logs
-
-You can freely edit these files with ChatGPT or any coding assistant.
+- Android and desktop packaging wrap the existing app; they do not magically add missing business modules.
+- Firebase remains the shared online backend. Offline screens may show cached data, but queued operations are not a guarantee of full offline operation.
+- Before operational use, verify Firebase authorized domains, security rules, administrator access, GPS permissions, and all login flows with test accounts.
+- Do not deploy database rules or overwrite production records without a reviewed backup and a separate validation step.
+- The Android workflow currently produces a debug APK for testing. No signed release key is stored in this repository.
