@@ -1,4 +1,3 @@
-
 {
   "rules": {
     ".read": false,
@@ -12,7 +11,9 @@
     },
     "tasks": {
       ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && (root.child('profiles').child(auth.uid).child('role').val() === 'admin' || (query.orderByChild === 'assigneeUid' && query.equalTo === auth.uid))",
-      ".indexOn": ["assigneeUid"],
+      ".indexOn": [
+        "assigneeUid"
+      ],
       "$taskId": {
         ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && data.child('assigneeUid').val() === auth.uid",
         ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
@@ -49,7 +50,9 @@
     },
     "tickets": {
       ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && (root.child('profiles').child(auth.uid).child('role').val() === 'admin' || (query.orderByChild === 'assignedTo' && query.equalTo === auth.uid))",
-      ".indexOn": ["assignedTo"],
+      ".indexOn": [
+        "assignedTo"
+      ],
       "$ticketId": {
         ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && (root.child('profiles').child(auth.uid).child('role').val() === 'admin' || (!data.exists() && newData.child('createdBy').val() === auth.uid && newData.child('assignedTo').val() === auth.uid) || (data.exists() && data.child('assignedTo').val() === auth.uid && newData.child('assignedTo').val() === data.child('assignedTo').val() && newData.child('createdBy').val() === data.child('createdBy').val() && newData.child('customerName').val() === data.child('customerName').val() && newData.child('contact').val() === data.child('contact').val() && newData.child('address').val() === data.child('address').val() && newData.child('category').val() === data.child('category').val() && newData.child('description').val() === data.child('description').val() && newData.child('priority').val() === data.child('priority').val() && newData.child('createdAt').val() === data.child('createdAt').val() && ((newData.child('status').val() === 'In Progress' && (data.child('status').val() === 'Open' || data.child('status').val() === 'Assigned')) || (newData.child('status').val() === 'Resolved' && data.child('status').val() === 'In Progress' && newData.child('resolvedAt').val() === now))))",
         ".validate": "newData.hasChildren(['customerName','category','description','priority','status','assignedTo','createdBy','createdAt']) && newData.child('customerName').isString() && newData.child('category').isString() && newData.child('description').isString() && newData.child('priority').isString() && newData.child('assignedTo').isString() && newData.child('createdBy').isString() && newData.child('createdAt').isNumber() && (newData.child('status').val() === 'Open' || newData.child('status').val() === 'Assigned' || newData.child('status').val() === 'In Progress' || newData.child('status').val() === 'Waiting for Customer' || newData.child('status').val() === 'Escalated' || newData.child('status').val() === 'Resolved' || newData.child('status').val() === 'Closed')"
@@ -77,6 +80,27 @@
       "$eventId": {
         ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin' && !data.exists() && newData.child('actor').val() === auth.uid",
         ".validate": "newData.hasChildren(['actor','action','recordId','createdAt']) && newData.child('actor').isString() && newData.child('action').isString() && newData.child('recordId').isString() && newData.child('createdAt').isNumber()"
+      }
+    },
+    "customers": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+      "$customerId": {
+        ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+        ".validate": "newData.hasChildren(['name','phone','status','createdAt','createdBy']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 120 && newData.child('phone').isString() && newData.child('phone').val().length > 0 && newData.child('phone').val().length <= 20 && newData.child('address').isString() && newData.child('plan').isString() && (newData.child('status').val() === 'Active' || newData.child('status').val() === 'Pending Installation' || newData.child('status').val() === 'Suspended' || newData.child('status').val() === 'Disconnected') && newData.child('createdAt').isNumber() && newData.child('createdBy').isString()"
+      }
+    },
+    "financeEntries": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+      "$entryId": {
+        ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin' && !data.exists()",
+        ".validate": "newData.hasChildren(['type','amountPaise','date','category','createdAt','createdBy']) && (newData.child('type').val() === 'income' || newData.child('type').val() === 'expense') && newData.child('amountPaise').isNumber() && newData.child('amountPaise').val() > 0 && newData.child('amountPaise').val() <= 10000000000 && newData.child('date').isString() && newData.child('category').isString() && newData.child('category').val().length > 0 && newData.child('category').val().length <= 80 && newData.child('createdAt').isNumber() && newData.child('createdBy').val() === auth.uid"
+      }
+    },
+    "inventoryItems": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+      "$itemId": {
+        ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+        ".validate": "newData.hasChildren(['name','sku','quantity','reorderLevel','unit','createdAt','createdBy']) && newData.child('name').isString() && newData.child('name').val().length > 0 && newData.child('name').val().length <= 120 && newData.child('sku').isString() && newData.child('quantity').isNumber() && newData.child('quantity').val() >= 0 && newData.child('quantity').val() <= 100000000 && newData.child('quantity').val() % 1 === 0 && newData.child('reorderLevel').isNumber() && newData.child('reorderLevel').val() >= 0 && newData.child('reorderLevel').val() % 1 === 0 && newData.child('unit').isString() && newData.child('createdAt').isNumber() && newData.child('createdBy').isString()"
       }
     }
   }
