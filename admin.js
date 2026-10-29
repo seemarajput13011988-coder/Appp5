@@ -808,7 +808,8 @@ function renderTaskReviews() {
 function renderAccessRequests() {
   const box = $('accessRequests');
   const entries = Object.entries(accessCache)
-    .filter(([, request]) => request.state === 'pending');
+    .filter(([, request]) => request.state === 'pending')
+    .sort((a, b) => (Number(b[1].createdAt) || 0) - (Number(a[1].createdAt) || 0));
   box.replaceChildren();
 
   if (!entries.length) {
@@ -819,17 +820,38 @@ function renderAccessRequests() {
   for (const [uid, request] of entries) {
     const row = document.createElement('div');
     row.className = 'list-row';
-    const details = document.createElement('p');
-    details.textContent = `${request.name || 'Employee'} · ${request.email || 'No email'}`;
+    row.style.display = 'grid';
+    row.style.gap = '8px';
+
+    const details = document.createElement('div');
+    const name = document.createElement('strong');
+    name.textContent = request.name || 'Employee';
+    const email = document.createElement('p');
+    email.className = 'muted';
+    email.textContent = request.email || 'No email provided';
+    const submitted = document.createElement('p');
+    submitted.className = 'muted';
+    submitted.textContent = Number.isFinite(Number(request.createdAt)) && Number(request.createdAt) > 0
+      ? 'Requested ' + new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' }).format(new Date(Number(request.createdAt)))
+      : 'Request date unavailable';
+    details.append(name, email, submitted);
     row.append(details);
 
+    const actions = document.createElement('div');
+    actions.className = 'flex flex-wrap gap-2';
+    const buttons = [];
     for (const [label, state] of [['Approve', 'approved'], ['Decline', 'rejected']]) {
       const button = document.createElement('button');
+      button.type = 'button';
       button.textContent = label;
       button.className = 'access-action';
-      button.style.marginRight = '8px';
       button.onclick = async () => {
-        button.disabled = true;
+        if (!auth.currentUser) {
+          $('actionError').textContent = 'Your admin session has expired. Sign in again.';
+          return;
+        }
+        for (const actionButton of buttons) actionButton.disabled = true;
+        $('actionError').textContent = '';
         const changes = {
           [`accessRequests/${uid}/state`]: state,
           [`accessRequests/${uid}/reviewedAt`]: serverTimestamp(),
@@ -848,13 +870,14 @@ function renderAccessRequests() {
           await update(ref(db), changes);
           await writeAudit(`access.${state}`, uid);
         } catch (e) {
-          $('actionError').textContent = 'Could not update access request. Check Firebase rules.';
-        } finally {
-          button.disabled = false;
+          $('actionError').textContent = 'Could not update access request. Check Firebase rules and your connection.';
+          for (const actionButton of buttons) actionButton.disabled = false;
         }
       };
-      row.append(button);
+      buttons.push(button);
+      actions.append(button);
     }
+    row.append(actions);
     box.append(row);
   }
 }
