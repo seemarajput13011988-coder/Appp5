@@ -8,6 +8,7 @@ const files = [
   'index.html',
   'admin.html',
   'employee.js',
+  'employee-requests.js',
   'admin.js',
   'enterprise-admin.js',
   'firebase.js',
