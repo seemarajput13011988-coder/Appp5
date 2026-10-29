@@ -112,6 +112,13 @@
           ".validate": "newData.hasChildren(['type','date','details','amountPaise','state','createdAt','createdBy']) && (newData.child('type').val() === 'leave' || newData.child('type').val() === 'expense' || newData.child('type').val() === 'advance') && newData.child('date').isString() && newData.child('details').isString() && newData.child('details').val().length > 0 && newData.child('details').val().length <= 1000 && newData.child('amountPaise').isNumber() && newData.child('amountPaise').val() >= 0 && newData.child('amountPaise').val() <= 100000000 && newData.child('state').isString() && (newData.child('state').val() === 'pending' || newData.child('state').val() === 'approved' || newData.child('state').val() === 'rejected') && newData.child('createdAt').isNumber() && newData.child('createdBy').isString() && ((newData.child('type').val() === 'leave' && newData.child('amountPaise').val() === 0) || (newData.child('type').val() !== 'leave' && newData.child('amountPaise').val() > 0)) && (!newData.child('reviewNote').exists() || (newData.child('reviewNote').isString() && newData.child('reviewNote').val().length <= 1000))"
         }
       }
+    },
+    "subscriptions": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+      "$subscriptionId": {
+        ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+        ".validate": "newData.hasChildren(['customerId','customerName','phone','plan','monthlyFeePaise','renewalDate','status','connectionId','createdAt','createdBy']) && newData.child('customerId').isString() && root.child('customers').child(newData.child('customerId').val()).exists() && newData.child('customerName').isString() && newData.child('phone').isString() && newData.child('plan').isString() && newData.child('plan').val().length > 0 && newData.child('plan').val().length <= 100 && newData.child('monthlyFeePaise').isNumber() && newData.child('monthlyFeePaise').val() >= 0 && newData.child('monthlyFeePaise').val() <= 100000000 && newData.child('renewalDate').isString() && (newData.child('status').val() === 'Active' || newData.child('status').val() === 'Payment Due' || newData.child('status').val() === 'Suspended' || newData.child('status').val() === 'Disconnected' || newData.child('status').val() === 'Pending Installation') && newData.child('connectionId').isString() && newData.child('createdAt').isNumber() && newData.child('createdBy').isString()"
+      }
     }
   }
 }
