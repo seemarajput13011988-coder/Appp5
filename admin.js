@@ -87,6 +87,23 @@ function makeRow(text) {
   return el;
 }
 
+function filterEmployeeDirectory() {
+  const search = ($('employeeSearch')?.value || '').trim().toLowerCase();
+  const status = $('employeeStatusFilter')?.value || 'all';
+  const cards = [...($('employeeList')?.querySelectorAll('article') || [])];
+  let visible = 0;
+  for (const card of cards) {
+    const matchesText = !search || (card.dataset.search || '').includes(search);
+    const matchesStatus = status === 'all' || card.dataset.status === status;
+    card.hidden = !(matchesText && matchesStatus);
+    if (!card.hidden) visible++;
+  }
+  const summary = $('employeeFilterSummary');
+  if (summary) summary.textContent = visible + ' of ' + cards.length + ' employee record' + (cards.length === 1 ? '' : 's');
+}
+$('employeeSearch')?.addEventListener('input', filterEmployeeDirectory);
+$('employeeStatusFilter')?.addEventListener('change', filterEmployeeDirectory);
+
 async function loadDashboardData(user) {
   unsub.forEach(fn => fn());
   unsub = [];
@@ -115,6 +132,8 @@ async function loadDashboardData(user) {
         const isActive = profile.active !== false && profile.status !== 'archived' && profile.status !== 'inactive';
         const card = document.createElement('article');
         card.className = 'border-b py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3';
+        card.dataset.search = [profile.name || '', profile.email || '', profile.team || '', uid, profile.status || '', isActive ? 'active' : 'inactive suspended archived'].join(' ').toLowerCase();
+        card.dataset.status = isActive ? 'active' : 'inactive';
         const details = document.createElement('div');
         details.className = 'min-w-0';
         const name = document.createElement('strong');
@@ -184,6 +203,7 @@ async function loadDashboardData(user) {
         $('recordEmployee').add(new Option((isActive ? '' : '[Inactive] ') + (profile.name || uid), uid));
       }
 
+      filterEmployeeDirectory();
       if (employees[recordSelection]) $('recordEmployee').value = recordSelection;
       renderWorkerRecords();
       renderTaskReviews();
