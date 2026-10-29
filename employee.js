@@ -581,64 +581,62 @@ function renderEmployeeTasks() {
 
   for (const [id, task] of employeeTasks) {
     const card = document.createElement('article');
-    card.className =
-      'border rounded-xl p-4 mb-3 bg-slate-50';
+    card.className = 'border rounded-xl p-4 mb-3 bg-slate-50';
 
     const heading = document.createElement('h4');
     heading.className = 'font-bold text-slate-900';
-    heading.textContent = task.title;
+    heading.textContent = task.title || 'Untitled task';
 
     const detail = document.createElement('p');
     detail.className = 'text-xs text-slate-500 mt-1';
-    detail.textContent =
-      `${task.status || 'Assigned'} · ${task.description || 'No description'}`;
-
+    detail.textContent = `${task.status || 'Assigned'} · ${task.description || 'No description'}`;
     card.append(heading, detail);
 
     const hasPendingReview = Object.values(employeeTaskRequests).some(
-      request => request.taskId === id && request.state === 'pending'
+      request => request && request.taskId === id && request.state === 'pending'
     );
     if (hasPendingReview) {
       const pending = document.createElement('p');
       pending.className = 'text-sm font-semibold mt-3';
       pending.textContent = 'Update submitted · waiting for administrator review';
       card.append(pending);
-    } else {
-      const taskActions = task.status === 'Assigned'
-        ? [['Start work', 'start']]
-        : ['In Progress', 'Rework Required'].includes(task.status)
-          ? [['Submit completion', 'complete']]
-          : task.status === 'Approved'
-            ? []
-            : [['Start work', 'start'], ['Submit completion', 'complete']];
+      box.append(card);
+      continue;
+    }
 
-      if (taskActions.length) {
-        const notes = document.createElement('textarea');
-        notes.placeholder = task.status === 'Rework Required'
-          ? 'Update the work and explain what you fixed'
-          : 'Work update / completion notes';
-        notes.maxLength = 1000;
-        notes.className = 'border rounded-lg p-2 w-full mt-3 text-sm';
-        card.append(notes);
+    const taskActions = task.status === 'Assigned'
+      ? [['Start work', 'start']]
+      : ['In Progress', 'Rework Required'].includes(task.status)
+        ? [['Submit completion', 'complete']]
+        : task.status === 'Approved'
+          ? []
+          : [['Start work', 'start'], ['Submit completion', 'complete']];
 
-        const buttons = document.createElement('div');
-        buttons.className = 'flex flex-wrap gap-2 mt-2';
+    if (taskActions.length) {
+      const notes = document.createElement('textarea');
+      notes.placeholder = task.status === 'Rework Required'
+        ? 'Update the work and explain what you fixed'
+        : 'Work update / completion notes';
+      notes.maxLength = 1000;
+      notes.className = 'border rounded-lg p-2 w-full mt-3 text-sm';
+      card.append(notes);
 
-        for (const [label, kind] of taskActions) {
+      const buttons = document.createElement('div');
+      buttons.className = 'flex flex-wrap gap-2 mt-2';
+
+      for (const [label, kind] of taskActions) {
         const button = document.createElement('button');
+        button.type = 'button';
         button.textContent = label;
-        button.className =
-          'rounded-lg bg-indigo-600 text-white px-3 py-2 text-xs font-semibold';
+        button.className = 'rounded-lg bg-indigo-600 text-white px-3 py-2 text-xs font-semibold';
 
         button.onclick = async () => {
           if (kind === 'complete' && !notes.value.trim()) {
-            $('taskFeedback').textContent =
-              'Add completion notes first.';
+            $('taskFeedback').textContent = 'Add completion notes first.';
             return;
           }
 
           button.disabled = true;
-
           try {
             const requestRef = push(ref(db, `taskRequests/${userId}`));
             const location = await getOptionalLocation();
@@ -649,23 +647,27 @@ function renderEmployeeTasks() {
               state: 'pending',
               ...(location ? { location } : {})
             };
+
             if (!navigator.onLine) {
-              await outbox('put', { key: requestRef.key, uid: userId, path: `taskRequests/${userId}/${requestRef.key}`, payload: requestData });
+              await outbox('put', {
+                key: requestRef.key,
+                uid: userId,
+                path: `taskRequests/${userId}/${requestRef.key}`,
+                payload: requestData
+              });
+              employeeTaskRequests[requestRef.key] = { ...requestData, localPending: true };
               $('taskFeedback').textContent = 'Saved offline. This update is pending synchronization.';
               notes.value = '';
+              renderEmployeeTasks();
               updateConnectionStatus();
               return;
             }
+
             await set(requestRef, { ...requestData, createdAt: serverTimestamp() });
-
-            $('taskFeedback').textContent =
-              'Update submitted for admin review.';
-
+            $('taskFeedback').textContent = 'Update submitted for admin review.';
             notes.value = '';
-
-          } catch (e) {
-            $('taskFeedback').textContent =
-              'Could not submit update. Check your permissions.';
+          } catch {
+            $('taskFeedback').textContent = 'Could not submit update. Check your permissions.';
           } finally {
             button.disabled = false;
           }
@@ -673,9 +675,7 @@ function renderEmployeeTasks() {
 
         buttons.append(button);
       }
-
-        card.append(buttons);
-      }
+      card.append(buttons);
     }
 
     box.append(card);
