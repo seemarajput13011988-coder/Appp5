@@ -36,7 +36,15 @@ function csvDownload(filename, records) {
 }
 
 onAuthStateChanged(auth, async user => {
-  if (!user || activeUid === user.uid) return;
+  if (!user) {
+    for (const stop of unsubscribers.splice(0)) stop();
+    activeUid = null;
+    customerCache = {};
+    financeCache = {};
+    inventoryCache = {};
+    return;
+  }
+  if (activeUid === user.uid) return;
   for (const stop of unsubscribers.splice(0)) stop();
   activeUid = null;
   try {
