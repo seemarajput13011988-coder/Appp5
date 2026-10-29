@@ -60,10 +60,14 @@ for (const [htmlPath, scripts] of htmlPairs) {
   }
 }
 
-const buildScript = await read('scripts/build-web.mjs');
-for (const match of buildScript.matchAll(/'([^']+\.(?:html|js|webmanifest|svg))'/g)) {
-  try { await access(match[1]); }
-  catch { errors.push(`Build input is missing: ${match[1]}`); }
+const buildInputs = [
+  'app.html', 'index.html', 'admin.html', 'employee.js',
+  'employee-requests.js', 'admin.js', 'enterprise-admin.js',
+  'firebase.js', 'manifest.webmanifest', 'icon.svg', 'sw.js'
+];
+for (const path of buildInputs) {
+  try { await access(path); }
+  catch { errors.push(`Build input is missing: ${path}`); }
 }
 
 if (errors.length) {
