@@ -56,7 +56,8 @@ Implemented on `enterprise-os/foundation` (not deployed):
 - Added Node static-file serving so `npm start` serves the actual app rather than the starter placeholder page.
 - Added Capacitor configuration and a GitHub Actions workflow that builds a debug APK for direct testing/sideloading.
 - Added Electron packaging and a GitHub Actions workflow for a portable Windows x64 build.
-- Added admin-only customer CRM, append-only finance ledger entries, and inventory/low-stock screens with CSV export.
+- Added admin-only customer CRM, ISP subscription/renewal tracking with due-date alerts, append-only finance ledger entries, and inventory/low-stock screens with CSV export.
+- Added employee leave, expense reimbursement, and salary-advance requests with admin approval/decline and audit events.
 - Extended the repository's Firebase Realtime Database rules for these new data paths; rules are a source file only and have not been deployed to Firebase.
 - Added a validation workflow for syntax, JSON parsing, and package entry points.
 
