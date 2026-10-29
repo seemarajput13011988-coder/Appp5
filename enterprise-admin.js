@@ -9,6 +9,7 @@ let financeCache = {};
 let inventoryCache = {};
 let requestCache = {};
 let profileCache = {};
+let subscriptionCache = {};
 let activeUid = null;
 
 const money = paise => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format((Number(paise) || 0) / 100);
@@ -46,7 +47,9 @@ onAuthStateChanged(auth, async user => {
     inventoryCache = {};
     requestCache = {};
     profileCache = {};
+    subscriptionCache = {};
     renderEmployeeRequests();
+    renderSubscriptions();
     return;
   }
   if (activeUid === user.uid) return;
@@ -61,11 +64,16 @@ onAuthStateChanged(auth, async user => {
     unsubscribers.push(onValue(ref(db, 'customers'), snap => {
       customerCache = snap.val() || {};
       renderCustomers();
+      renderSubscriptionCustomerOptions();
     }, error => showError('Customer records unavailable. Verify the customers database rules.')));
     unsubscribers.push(onValue(ref(db, 'financeEntries'), snap => {
       financeCache = snap.val() || {};
       renderFinance();
     }, error => showError('Finance ledger unavailable. Verify the financeEntries database rules.')));
+    unsubscribers.push(onValue(ref(db, 'subscriptions'), snap => {
+      subscriptionCache = snap.val() || {};
+      renderSubscriptions();
+    }, error => showError('Subscriptions unavailable. Verify the subscriptions database rules.')));
     unsubscribers.push(onValue(ref(db, 'inventoryItems'), snap => {
       inventoryCache = snap.val() || {};
       renderInventory();
@@ -145,6 +153,81 @@ $('customerForm')?.addEventListener('submit', async event => {
     setStatus('customerFeedback', id ? 'Customer updated.' : 'Customer added.');
   } catch { showError('Customer save failed. Check database rules and connection.'); }
 });
+
+
+function renderSubscriptionCustomerOptions() {
+  const select = $('subscriptionCustomer');
+  if (!select) return;
+  const previous = select.value;
+  select.replaceChildren(new Option('Select customer', ''));
+  for (const [id, customer] of Object.entries(customerCache)) {
+    select.add(new Option((customer.name || 'Customer') + ' · ' + (customer.phone || ''), id));
+  }
+  if (customerCache[previous]) select.value = previous;
+  else if (!Object.keys(customerCache).length) select.replaceChildren(new Option('Add a customer in Customer CRM first', ''));
+}
+function renderSubscriptions() {
+  const box = $('subscriptionList');
+  if (!box) return;
+  box.replaceChildren();
+  const entries = Object.entries(subscriptionCache).sort((a,b) => String(a[1].renewalDate || '').localeCompare(String(b[1].renewalDate || '')));
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  for (const [id, item] of entries) {
+    const delta = item.renewalDate ? Math.round((Date.parse(item.renewalDate + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / 86400000) : null;
+    const card = document.createElement('article');
+    card.className = 'rounded-xl border p-4 mb-3 ' + (delta !== null && delta < 0 ? 'border-rose-200 bg-rose-50' : delta !== null && delta <= 7 ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white');
+    const title = document.createElement('h3'); title.className = 'font-bold';
+    title.textContent = item.customerName || 'Customer';
+    const detail = document.createElement('p'); detail.className = 'text-sm text-slate-600 mt-1';
+    detail.textContent = [item.phone, item.plan, money(item.monthlyFeePaise) + '/month', item.status, item.renewalDate ? 'Renewal: ' + item.renewalDate : 'No renewal date', item.connectionId ? 'ID: ' + item.connectionId : ''].filter(Boolean).join(' · ');
+    const warning = document.createElement('p'); warning.className = 'text-sm font-semibold mt-2';
+    warning.textContent = delta === null ? 'Renewal date not set' : delta < 0 ? 'Overdue by ' + Math.abs(delta) + ' day(s)' : delta === 0 ? 'Renewal due today' : delta <= 7 ? 'Renewal due in ' + delta + ' day(s)' : delta + ' days until renewal';
+    const actions = document.createElement('div'); actions.className = 'flex flex-wrap gap-2 mt-3';
+    const edit = document.createElement('button'); edit.type='button'; edit.className='rounded-lg border px-3 py-2 text-sm'; edit.textContent='Edit subscription';
+    edit.onclick = () => {
+      $('subscriptionId').value=id;
+      $('subscriptionCustomer').value=item.customerId||'';
+      $('subscriptionPlan').value=item.plan||'';
+      $('subscriptionFee').value=((Number(item.monthlyFeePaise)||0)/100).toFixed(2);
+      $('subscriptionRenewal').value=item.renewalDate||'';
+      $('subscriptionStatus').value=item.status||'Active';
+      $('subscriptionConnectionId').value=item.connectionId||'';
+      $('subscriptionSave').textContent='Save subscription changes';
+      $('subscriptionPlan').focus();
+    };
+    actions.append(edit); card.append(title,detail,warning,actions); box.append(card);
+  }
+  setStatus('subscriptionCountLabel', entries.length + ' subscription record' + (entries.length === 1 ? '' : 's'));
+  if (!entries.length) box.textContent='No subscriptions yet. Add a customer first, then create their subscription.';
+}
+function resetSubscriptionForm() {
+  $('subscriptionForm')?.reset();
+  $('subscriptionId').value='';
+  $('subscriptionSave').textContent='Add subscription';
+  renderSubscriptionCustomerOptions();
+}
+$('subscriptionForm')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!activeUid) return showError('Sign in with an authorized administrator account first.');
+  const id=$('subscriptionId').value;
+  const customerId=$('subscriptionCustomer').value;
+  const customer=customerCache[customerId];
+  const plan=safe($('subscriptionPlan').value);
+  const fee=Number($('subscriptionFee').value);
+  const renewalDate=$('subscriptionRenewal').value;
+  const status=$('subscriptionStatus').value;
+  const connectionId=safe($('subscriptionConnectionId').value);
+  if (!customer || !plan || !renewalDate || !Number.isFinite(fee) || fee<0 || fee>1000000) return showError('Choose a customer and enter a plan, valid monthly price, and renewal date.');
+  const payload={customerId,customerName:customer.name||'',phone:customer.phone||'',plan,monthlyFeePaise:Math.round(fee*100),renewalDate,status,connectionId,updatedAt:serverTimestamp(),updatedBy:activeUid};
+  try {
+    if(id) await update(ref(db,'subscriptions/'+id),payload);
+    else await set(push(ref(db,'subscriptions')),{...payload,createdAt:serverTimestamp(),createdBy:activeUid});
+    resetSubscriptionForm();
+    showError('');
+    setStatus('subscriptionFeedback',id?'Subscription updated.':'Subscription added to the renewal tracker.');
+  } catch { showError('Subscription save failed. Check the subscriptions database rules and connection.'); }
+});
+$('exportSubscriptions')?.addEventListener('click', () => csvDownload('kb-subscriptions.csv',Object.values(subscriptionCache).map(item=>({customer:item.customerName,phone:item.phone,plan:item.plan,monthlyFeeINR:((Number(item.monthlyFeePaise)||0)/100).toFixed(2),renewalDate:item.renewalDate,status:item.status,connectionId:item.connectionId}))));
 
 function renderFinance() {
   const box = $('financeEntryList');
