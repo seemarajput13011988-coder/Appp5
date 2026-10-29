@@ -1,0 +1,33 @@
+[build]
+  command = "npm run build:web"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Keep the static multi-page app's named workspaces easy to reach.
+[[redirects]]
+  from = "/employee"
+  to = "/employee.html"
+  status = 301
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 301
+
+[[redirects]]
+  from = "/launcher"
+  to = "/launcher.html"
+  status = 301
+
+# Do not cache HTML for long; this app is updated as a static site.
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
