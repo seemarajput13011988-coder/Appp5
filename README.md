@@ -29,6 +29,13 @@ For local desktop development:
 npm run desktop:dev
 ```
 
+## Admin modules added on the foundation branch
+
+- **Customer CRM:** add and edit ISP customer contact, address, plan and status records; export the directory to CSV.
+- **Finance ledger:** record income and expenses in paise, show totals from recorded entries, and export the ledger to CSV. It is not yet a full double-entry accounting system or audited P&L.
+- **Inventory:** maintain stock items, SKU codes, quantities and low-stock thresholds; adjust stock and export to CSV.
+- The new modules require the matching rules in `database.rules.json` to be reviewed and manually deployed to Firebase before the screens can read or write those records. Do not replace production rules without a backup and test project.
+
 ## Important current limitations
 
 - Android and desktop packaging wrap the existing app; they do not magically add missing business modules.
