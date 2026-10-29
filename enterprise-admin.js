@@ -95,8 +95,16 @@ function renderCustomers() {
   const box = $('crmCustomerList');
   if (!box) return;
   box.replaceChildren();
-  const entries = Object.entries(customerCache).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
-  if (!entries.length) { box.textContent = 'No customers added yet.'; return; }
+  const allEntries = Object.entries(customerCache).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+  const search = safe($('customerSearch')?.value).toLowerCase();
+  const status = $('customerStatusFilter')?.value || 'all';
+  const entries = allEntries.filter(([, customer]) => {
+    const searchable = [customer.name, customer.phone, customer.address, customer.plan, customer.status, customer.id].map(safe).join(' ').toLowerCase();
+    return (!search || searchable.includes(search)) && (status === 'all' || customer.status === status);
+  });
+  setStatus('customerFilterSummary', entries.length + ' shown · ' + allEntries.length + ' total');
+  if (!allEntries.length) { box.textContent = 'No customers added yet.'; setStatus('customerCountLabel', '0 customer records'); return; }
+  if (!entries.length) { box.textContent = 'No customers match these filters.'; setStatus('customerCountLabel', '0 matching customer records'); return; }
   for (const [id, customer] of entries) {
     const card = document.createElement('article');
     card.className = 'rounded-xl border border-slate-200 p-4 mb-3 bg-white';
@@ -127,8 +135,10 @@ function renderCustomers() {
     card.append(title, details, actions);
     box.append(card);
   }
-  setStatus('customerCountLabel', entries.length + ' customer record' + (entries.length === 1 ? '' : 's'));
+  setStatus('customerCountLabel', entries.length + ' matching customer record' + (entries.length === 1 ? '' : 's'));
 }
+$('customerSearch')?.addEventListener('input', renderCustomers);
+$('customerStatusFilter')?.addEventListener('change', renderCustomers);
 function resetCustomerForm() {
   $('customerForm')?.reset();
   $('customerId').value = '';
