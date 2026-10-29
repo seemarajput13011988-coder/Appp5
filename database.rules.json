@@ -119,6 +119,16 @@
         ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
         ".validate": "newData.hasChildren(['customerId','customerName','phone','plan','monthlyFeePaise','renewalDate','status','connectionId','createdAt','createdBy']) && newData.child('customerId').isString() && root.child('customers').child(newData.child('customerId').val()).exists() && newData.child('customerName').isString() && newData.child('phone').isString() && newData.child('plan').isString() && newData.child('plan').val().length > 0 && newData.child('plan').val().length <= 100 && newData.child('monthlyFeePaise').isNumber() && newData.child('monthlyFeePaise').val() >= 0 && newData.child('monthlyFeePaise').val() <= 100000000 && newData.child('renewalDate').isString() && (newData.child('status').val() === 'Active' || newData.child('status').val() === 'Payment Due' || newData.child('status').val() === 'Suspended' || newData.child('status').val() === 'Disconnected' || newData.child('status').val() === 'Pending Installation') && newData.child('connectionId').isString() && newData.child('createdAt').isNumber() && newData.child('createdBy').isString()"
       }
+    },
+    "attendanceCorrections": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+      "$uid": {
+        ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && (auth.uid === $uid || root.child('profiles').child(auth.uid).child('role').val() === 'admin')",
+        "$correctionId": {
+          ".write": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin' && !data.exists()",
+          ".validate": "newData.hasChildren(['workDate','correctedStart','correctedEnd','reason','createdAt','createdBy']) && newData.child('workDate').isString() && newData.child('correctedStart').isString() && newData.child('correctedEnd').isString() && (newData.child('correctedStart').val().length > 0 || newData.child('correctedEnd').val().length > 0) && newData.child('reason').isString() && newData.child('reason').val().length > 0 && newData.child('reason').val().length <= 500 && newData.child('createdAt').isNumber() && newData.child('createdBy').val() === auth.uid"
+        }
+      }
     }
   }
 }
