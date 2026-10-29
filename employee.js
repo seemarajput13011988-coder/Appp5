@@ -77,6 +77,7 @@ let offTickets = () => {};
 let offAnnouncements = () => {};
 let offMessages = () => {};
 let offApproval = () => {};
+let offCorrections = () => {};
 $('approvalSignOut').onclick = () => signOut(auth);
 
 let userId = null;
@@ -99,6 +100,7 @@ $('signupForm').onsubmit = async event => {
   } finally { button.disabled = false; }
 };
 let workerShifts = {};
+let workerCorrections = {};
 function workDate(ts) {
   if (!Number.isFinite(ts)) return '';
   const parts = new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(ts));
@@ -109,11 +111,17 @@ function showDailyAttendance() {
   const day = $('workerHistoryDate').value;
   const box = $('workerHistoryList'); box.replaceChildren();
   const entries = Object.values(workerShifts).filter(s => workDate(s.startedAt) === day).sort((a,b)=>(b.startedAt||0)-(a.startedAt||0));
-  if (!entries.length) { box.textContent='No attendance records for this date.'; return; }
+  const corrections = Object.values(workerCorrections).filter(item => item.workDate === day).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if (!entries.length && !corrections.length) { box.textContent='No attendance records for this date.'; return; }
   const time = ts => Number.isFinite(ts) ? new Date(ts).toLocaleTimeString('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit'}) : '—';
   for (const shift of entries) {
     const row = document.createElement('article'); row.className='task';
     row.textContent='Start: '+time(shift.startedAt)+' · End: '+time(shift.endedAt)+' · '+(shift.status||'Unknown');
+    box.append(row);
+  }
+  for (const correction of corrections) {
+    const row = document.createElement('article'); row.className='task';
+    row.textContent='Admin correction · Start: '+(correction.correctedStart||'unchanged')+' · End: '+(correction.correctedEnd||'unchanged')+' · Reason: '+(correction.reason||'—');
     box.append(row);
   }
 }
@@ -233,6 +241,8 @@ onAuthStateChanged(auth, async user => {
   offAnnouncements();
   offMessages();
   offApproval();
+  offCorrections();
+  workerCorrections = {};
   userId = null;
   $('approvalStatus').classList.add('hidden');
 
@@ -356,6 +366,13 @@ onAuthStateChanged(auth, async user => {
       $('startShift').disabled = true;
       $('endShift').disabled = true;
       $('shiftStatus').textContent = `${shiftActive ? 'On duty' : 'Off duty'} · offline copy`;
+    });
+
+    offCorrections = onValue(ref(db, `attendanceCorrections/${userId}`), snap => {
+      workerCorrections = snap.val() || {};
+      showDailyAttendance();
+    }, () => {
+      $('actionError').textContent = 'Could not load attendance correction notes.';
     });
 
     offRequests = onValue(
