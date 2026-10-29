@@ -31,6 +31,7 @@ jobs:
       - name: Verify packaged website files
         run: |
           test -s dist/index.html
+          test -s dist/launcher.html
           test -s dist/employee.html
           test -s dist/admin.html
           test -s dist/employee.js
