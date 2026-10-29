@@ -82,7 +82,9 @@ const approvalChecks = [
   [rulesSource.includes('"accessRequests"') && rulesSource.includes("newData.child('state').val() === 'pending'"), 'Firebase rules must constrain new access requests to pending state'],
   [rulesSource.includes('"employeeRequests"') && rulesSource.includes("newData.child('createdBy').val() === auth.uid"), 'Firebase rules must bind employee requests to their authenticated owner'],
   [enterpriseAdminSource.includes('let decisionInProgress = false') && enterpriseAdminSource.includes('decisionButtons.forEach(action => { action.disabled = true; });'), 'Employee request review must prevent conflicting approve/decline clicks'],
-  [electronSource.includes("window.loadFile(path.join(__dirname, '..', 'dist', 'employee.html'))"), 'Desktop employee menu must open the employee portal, not the workspace launcher']
+  [electronSource.includes("window.loadFile(path.join(__dirname, '..', 'dist', 'employee.html'))"), 'Desktop employee menu must open the employee portal, not the workspace launcher'],
+  [employeeSource.includes("task.status === 'Rework Required'") && employeeSource.includes("[['Submit completion', 'complete']]"), 'Employees must be able to resubmit tasks returned for rework'],
+  [employeeSource.includes("request.taskId === id && request.state === 'pending'") && employeeSource.includes('waiting for administrator review'), 'Employee task UI must prevent duplicate submissions while a review is pending']
 ];
 for (const [passed, message] of approvalChecks) {
   if (!passed) errors.push(`Approval-flow regression check failed: ${message}`);
