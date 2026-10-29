@@ -2,6 +2,9 @@ name: Build Windows Desktop App
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '**'
   push:
     paths:
       - 'app.html'
