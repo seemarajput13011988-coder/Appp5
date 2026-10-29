@@ -2,3 +2,8 @@ node_modules/
 .env
 npm-debug.log*
 .DS_Store
+dist/
+android/
+ios/
+release/
+*.log
