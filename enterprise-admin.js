@@ -233,19 +233,28 @@ function renderFinance() {
   const box = $('financeEntryList');
   if (!box) return;
   box.replaceChildren();
-  const entries = Object.entries(financeCache).sort((a,b) => String(b[1].date || '').localeCompare(String(a[1].date || '')));
+  const allEntries = Object.entries(financeCache).sort((a,b) => String(b[1].date || '').localeCompare(String(a[1].date || '')));
+  const selectedMonth = $('financePeriod')?.value || '';
+  const entries = allEntries.filter(([, item]) => !selectedMonth || String(item.date || '').startsWith(selectedMonth));
   let income = 0, expenses = 0;
   for (const [, item] of entries) {
     const amount = Number(item.amountPaise) || 0;
-    if (item.type === 'income') income += amount; else expenses += amount;
+    if (item.type === 'income') income += amount; else if (item.type === 'expense') expenses += amount;
     row(box, [item.date || '—', item.type === 'income' ? 'Income' : 'Expense', item.category || 'General', money(amount) + (item.note ? ' · ' + item.note : '')]);
   }
+  const periodLabel = selectedMonth ? new Date(selectedMonth + '-02T00:00:00').toLocaleDateString('en-IN', {month:'long',year:'numeric'}) : 'All-time';
+  setStatus('financeIncomeLabel', periodLabel + ' income');
+  setStatus('financeExpenseLabel', periodLabel + ' expenses');
+  setStatus('financeNetLabel', periodLabel + ' net balance');
   setStatus('financeIncomeTotal', money(income));
   setStatus('financeExpenseTotal', money(expenses));
   setStatus('financeNetTotal', money(income - expenses));
-  setStatus('financeCountLabel', entries.length + ' ledger entr' + (entries.length === 1 ? 'y' : 'ies'));
-  if (!entries.length) box.textContent = 'No transactions recorded yet.';
+  setStatus('financeCountLabel', entries.length + ' of ' + allEntries.length + ' ledger entr' + (allEntries.length === 1 ? 'y' : 'ies') + (selectedMonth ? ' · ' + periodLabel : ''));
+  if (!entries.length) box.textContent = allEntries.length ? 'No transactions recorded in this period.' : 'No transactions recorded yet.';
 }
+$('financePeriod')?.addEventListener('input', renderFinance);
+$('financeAllPeriod')?.addEventListener('click', () => { $('financePeriod').value = ''; renderFinance(); });
+$('financePeriod').value = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }).slice(0,7);
 $('financeForm')?.addEventListener('submit', async event => {
   event.preventDefault();
   if (!activeUid) return showError('Sign in with an authorized administrator account first.');
