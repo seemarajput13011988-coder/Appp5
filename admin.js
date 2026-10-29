@@ -650,6 +650,7 @@ document.querySelectorAll('[data-export]').forEach(button => button.onclick = ()
   if (key==='tasks') exportCsv('tasks',Object.entries(tasksCache).map(([id,t])=>({id,...t,createdAt:formatDate(t.createdAt)})));
   if (key==='tickets') exportCsv('tickets',Object.entries(ticketCache).map(([id,t])=>({id,...t,createdAt:formatDate(t.createdAt),resolvedAt:formatDate(t.resolvedAt)})));
   if (key==='shifts') exportCsv('shifts',Object.entries(shiftCache).flatMap(([uid,records])=>Object.entries(records||{}).map(([id,s])=>({employee:employees[uid]?.name || uid,id,status:s.status,startedAt:formatDate(s.startedAt),endedAt:formatDate(s.endedAt),startLatitude:s.location?.latitude,startLongitude:s.location?.longitude,locationAccuracy:s.location?.accuracy,endLatitude:s.endLocation?.latitude,endLongitude:s.endLocation?.longitude}))));
+  if (key==='attendanceCorrections') exportCsv('attendance-corrections',Object.entries(correctionCache).flatMap(([uid,records])=>Object.entries(records||{}).map(([id,item])=>({employee:employees[uid]?.name||uid,uid,id,workDate:item.workDate,correctedStart:item.correctedStart,correctedEnd:item.correctedEnd,reason:item.reason,createdAt:formatDate(item.createdAt),createdBy:item.createdBy}))));
   if (key==='audit') exportCsv('audit',Object.entries(auditCache).map(([id,item])=>({id,...item,createdAt:formatDate(item.createdAt)})));
 });
 function formatDate(value) { return value ? new Date(value).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}) : ''; }
