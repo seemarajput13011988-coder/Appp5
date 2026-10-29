@@ -47,3 +47,17 @@ This plan intentionally extends the existing K&B Workforce app and Firebase proj
 - The repository has employee and admin portals, Firebase configuration, database rules, and a service worker.
 - Branch `repair/admin-portal` has an open, unmerged pull request touching `admin.html`, `admin.js`, `employee.js`, `index.html`, and `sw.js`.
 - This document is planning guidance, not proof that any listed module is implemented or tested.
+
+
+## Progress update — 2026-10-29
+
+Implemented on `enterprise-os/foundation` (not deployed):
+- Added a shared mobile/desktop workspace launcher (`app.html`) and responsive admin shell layout.
+- Added Node static-file serving so `npm start` serves the actual app rather than the starter placeholder page.
+- Added Capacitor configuration and a GitHub Actions workflow that builds a debug APK for direct testing/sideloading.
+- Added Electron packaging and a GitHub Actions workflow for a portable Windows x64 build.
+- Added admin-only customer CRM, append-only finance ledger entries, and inventory/low-stock screens with CSV export.
+- Extended the repository's Firebase Realtime Database rules for these new data paths; rules are a source file only and have not been deployed to Firebase.
+- Added a validation workflow for syntax, JSON parsing, and package entry points.
+
+Still not completed/verified: live Firebase rule simulation, actual GitHub Actions results, real Android device GPS permissions, Google sign-in inside native/desktop wrappers, signed release APK, Windows executable runtime, ISP subscriptions/renewals/billing, installations, employee-side requests/expense claims, and complete accounting/payroll. The APK and desktop builds are packaging foundations, not a claim that every planned module is complete.
