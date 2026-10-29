@@ -36,6 +36,7 @@ npm run desktop:dev
 - **Finance ledger:** record income and expenses in paise, show totals from recorded entries, and export the ledger to CSV. It is not yet a full double-entry accounting system or audited P&L.
 - **Inventory:** maintain stock items, SKU codes, quantities and low-stock thresholds; adjust stock and export to CSV.
 - **Employee requests:** employees can submit leave, expense reimbursement, or salary-advance requests; admins can approve/decline with a recorded review and audit event.
+- **Attendance corrections:** admins can record corrected start/end times with a mandatory reason; employees can see their own correction notes. Original shift/GPS records remain unchanged.
 - The new modules require the matching rules in `database.rules.json` to be reviewed and manually deployed to Firebase before the screens can read or write those records. Do not replace production rules without a backup and test project.
 
 ## Important current limitations
