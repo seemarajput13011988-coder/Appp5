@@ -322,19 +322,24 @@ function renderEmployeeRequests() {
     if (request.state === 'pending') {
       const actions = document.createElement('div');
       actions.className = 'flex flex-wrap gap-2 mt-3';
+      const decisionButtons = [];
+      let decisionInProgress = false;
       for (const [label, state] of [['Approve','approved'],['Decline','rejected']]) {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'rounded-xl px-4 py-2 text-sm font-semibold ' + (state === 'approved' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white');
         button.textContent = label;
+        decisionButtons.push(button);
         button.onclick = async () => {
+          if (decisionInProgress) return;
           if (!activeUid) return showError('Sign in as an administrator to review requests.');
           const reviewNote = state === 'rejected' ? (prompt('Reason for declining this request (required):', '') || '').trim() : (prompt('Optional note for the employee:', '') || '').trim();
           if (state === 'rejected' && !reviewNote) {
             setStatus('adminRequestFeedback', 'Please enter a reason before declining a request.');
             return;
           }
-          button.disabled = true;
+          decisionInProgress = true;
+          decisionButtons.forEach(action => { action.disabled = true; });
           const auditRef = push(ref(db, 'auditLogs'));
           const changes = {};
           changes['employeeRequests/' + uid + '/' + id + '/state'] = state;
@@ -349,7 +354,8 @@ function renderEmployeeRequests() {
           } catch {
             setStatus('adminRequestFeedback', 'Could not save the decision. Verify the employeeRequests and auditLogs rules.');
           } finally {
-            button.disabled = false;
+            decisionInProgress = false;
+            decisionButtons.forEach(action => { action.disabled = false; });
           }
         };
         actions.append(button);
