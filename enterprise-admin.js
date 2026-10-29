@@ -7,6 +7,8 @@ const unsubscribers = [];
 let customerCache = {};
 let financeCache = {};
 let inventoryCache = {};
+let requestCache = {};
+let profileCache = {};
 let activeUid = null;
 
 const money = paise => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format((Number(paise) || 0) / 100);
@@ -42,6 +44,9 @@ onAuthStateChanged(auth, async user => {
     customerCache = {};
     financeCache = {};
     inventoryCache = {};
+    requestCache = {};
+    profileCache = {};
+    renderEmployeeRequests();
     return;
   }
   if (activeUid === user.uid) return;
@@ -64,6 +69,14 @@ onAuthStateChanged(auth, async user => {
       inventoryCache = snap.val() || {};
       renderInventory();
     }, error => showError('Inventory unavailable. Verify the inventoryItems database rules.')));
+    unsubscribers.push(onValue(ref(db, 'profiles'), snap => {
+      profileCache = snap.val() || {};
+      renderEmployeeRequests();
+    }, error => showError('Employee names could not be loaded for request review.')));
+    unsubscribers.push(onValue(ref(db, 'employeeRequests'), snap => {
+      requestCache = snap.val() || {};
+      renderEmployeeRequests();
+    }, error => showError('Employee requests unavailable. Verify the employeeRequests database rules.')));
   } catch {
     showError('Business modules could not verify administrator access.');
   }
@@ -168,6 +181,81 @@ $('financeForm')?.addEventListener('submit', async event => {
   } catch { showError('Finance entry failed. Check database rules and connection.'); }
 });
 $('exportFinance')?.addEventListener('click', () => csvDownload('kb-finance-ledger.csv', Object.values(financeCache).map(item => ({ date: item.date, type: item.type, amountINR: ((Number(item.amountPaise)||0)/100).toFixed(2), category: item.category, note: item.note, createdBy: item.createdBy }))));
+
+
+function renderEmployeeRequests() {
+  const box = $('adminEmployeeRequestList');
+  if (!box) return;
+  box.replaceChildren();
+  const requests = [];
+  for (const [uid, items] of Object.entries(requestCache || {})) {
+    for (const [id, request] of Object.entries(items || {})) requests.push({ uid, id, request });
+  }
+  requests.sort((a,b) => (b.request.createdAt || 0) - (a.request.createdAt || 0));
+  if (!requests.length) { box.textContent = 'No employee requests have been submitted.'; return; }
+  for (const item of requests) {
+    const { uid, id, request } = item;
+    const card = document.createElement('article');
+    card.className = 'rounded-xl border border-slate-200 p-4 mb-3 bg-white';
+    const title = document.createElement('h3');
+    title.className = 'font-bold';
+    title.textContent = ({leave:'Leave request',expense:'Expense reimbursement',advance:'Salary advance'})[request.type] || 'Employee request';
+    const status = document.createElement('span');
+    status.className = 'inline-flex rounded-full px-3 py-1 text-xs font-bold ' + (request.state === 'approved' ? 'bg-emerald-100 text-emerald-800' : request.state === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800');
+    status.textContent = request.state === 'approved' ? 'Approved' : request.state === 'rejected' ? 'Declined' : 'Pending';
+    const who = document.createElement('p');
+    who.className = 'text-sm text-slate-600 mt-2';
+    who.textContent = (profileCache[uid]?.name || profileCache[uid]?.email || uid) + ' · ' + (request.date || 'No date') + (request.amountPaise > 0 ? ' · ' + money(request.amountPaise) : '');
+    const details = document.createElement('p');
+    details.className = 'text-sm mt-2 whitespace-pre-wrap';
+    details.textContent = request.details || '';
+    card.append(title, status, who, details);
+    if (request.reviewNote) {
+      const note = document.createElement('p');
+      note.className = 'text-sm text-slate-500 mt-2';
+      note.textContent = 'Review note: ' + request.reviewNote;
+      card.append(note);
+    }
+    if (request.state === 'pending') {
+      const actions = document.createElement('div');
+      actions.className = 'flex flex-wrap gap-2 mt-3';
+      for (const [label, state] of [['Approve','approved'],['Decline','rejected']]) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'rounded-xl px-4 py-2 text-sm font-semibold ' + (state === 'approved' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white');
+        button.textContent = label;
+        button.onclick = async () => {
+          if (!activeUid) return showError('Sign in as an administrator to review requests.');
+          const reviewNote = state === 'rejected' ? (prompt('Reason for declining this request (required):', '') || '').trim() : (prompt('Optional note for the employee:', '') || '').trim();
+          if (state === 'rejected' && !reviewNote) {
+            setStatus('adminRequestFeedback', 'Please enter a reason before declining a request.');
+            return;
+          }
+          button.disabled = true;
+          const auditRef = push(ref(db, 'auditLogs'));
+          const changes = {};
+          changes['employeeRequests/' + uid + '/' + id + '/state'] = state;
+          changes['employeeRequests/' + uid + '/' + id + '/reviewedAt'] = serverTimestamp();
+          changes['employeeRequests/' + uid + '/' + id + '/reviewedBy'] = activeUid;
+          changes['employeeRequests/' + uid + '/' + id + '/reviewNote'] = reviewNote;
+          changes['auditLogs/' + auditRef.key] = { actor: activeUid, action: 'employee_request.' + state, recordId: uid + '/' + id, createdAt: serverTimestamp() };
+          try {
+            await update(ref(db), changes);
+            setStatus('adminRequestFeedback', 'Request decision saved and audit event recorded.');
+            showError('');
+          } catch {
+            setStatus('adminRequestFeedback', 'Could not save the decision. Verify the employeeRequests and auditLogs rules.');
+          } finally {
+            button.disabled = false;
+          }
+        };
+        actions.append(button);
+      }
+      card.append(actions);
+    }
+    box.append(card);
+  }
+}
 
 function renderInventory() {
   const box = $('inventoryList');
