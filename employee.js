@@ -536,3 +536,68 @@ function renderEmployeeTasks() {
     box.append(card);
   }
 }
+
+
+// Organize the employee workspace into focused views without changing the IDs
+// used by attendance, tasks, tickets, requests, messages, or Firebase handlers.
+function setupEmployeeWorkspaceNavigation() {
+  const workspace = $('workspace');
+  if (!workspace || workspace.dataset.navigationReady === 'true') return;
+  const directChildContaining = id => [...workspace.children].find(node => node.querySelector('#' + id));
+  const welcome = directChildContaining('userName');
+  if (!welcome) return;
+
+  const cardFor = id => directChildContaining(id);
+  const groups = [
+    { id: 'home', label: 'Overview', icon: '⌂', ids: ['shiftStatus'], title: 'Your shift' },
+    { id: 'attendance', label: 'Attendance', icon: '◷', ids: ['workerHistoryList'], title: 'My attendance' },
+    { id: 'tasks', label: 'My tasks', icon: '☷', ids: ['tasks'], title: 'Assigned work' },
+    { id: 'tickets', label: 'Tickets', icon: '◇', ids: ['ticketForm'], title: 'Customer service' },
+    { id: 'requests', label: 'Requests', icon: '▣', ids: ['employeeRequestForm'], title: 'My requests' },
+    { id: 'updates', label: 'Updates', icon: '✉', ids: ['announcements', 'employeeMessageForm'], title: 'Team updates' }
+  ];
+  const nav = document.createElement('nav');
+  nav.className = 'employee-nav';
+  nav.setAttribute('aria-label', 'Employee workspace sections');
+  nav.setAttribute('role', 'tablist');
+  const views = document.createElement('div');
+  views.className = 'employee-views';
+
+  for (const [index, group] of groups.entries()) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = group.icon + '  ' + group.label;
+    button.setAttribute('role', 'tab');
+    button.setAttribute('aria-controls', 'employee-view-' + group.id);
+    button.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
+    if (index === 0) button.setAttribute('aria-current', 'page');
+    const view = document.createElement('section');
+    view.className = 'employee-view' + (index === 0 ? ' is-active' : '');
+    view.id = 'employee-view-' + group.id;
+    view.setAttribute('role', 'tabpanel');
+    view.setAttribute('aria-label', group.title);
+    button.addEventListener('click', () => {
+      for (const otherButton of nav.querySelectorAll('button')) {
+        const active = otherButton === button;
+        otherButton.setAttribute('aria-selected', String(active));
+        if (active) otherButton.setAttribute('aria-current', 'page');
+        else otherButton.removeAttribute('aria-current');
+      }
+      for (const otherView of views.children) otherView.classList.toggle('is-active', otherView === view);
+    });
+    nav.append(button);
+    views.append(view);
+    for (const targetId of group.ids) {
+      const card = cardFor(targetId);
+      if (card && card !== welcome && !card.contains(nav)) {
+        card.classList.add('employee-card');
+        view.append(card);
+      }
+    }
+  }
+  welcome.classList.add('employee-welcome');
+  welcome.after(nav);
+  nav.after(views);
+  workspace.dataset.navigationReady = 'true';
+}
+setupEmployeeWorkspaceNavigation();
