@@ -190,7 +190,31 @@ async function loadDashboardData(user) {
             archiveButton.disabled = false;
           }
         };
-        actions.append(statusButton, archiveButton);
+        const editButton = document.createElement('button');
+        editButton.type = 'button';
+        editButton.className = 'rounded-lg border px-3 py-2 text-xs font-semibold';
+        editButton.textContent = 'Edit details';
+        editButton.onclick = async () => {
+          const nextName = prompt('Employee name:', profile.name || '');
+          if (nextName === null) return;
+          const nextTeam = prompt('Assigned team:', profile.team || 'Unassigned');
+          if (nextTeam === null) return;
+          if (!nextName.trim()) { $('actionError').textContent = 'Employee name cannot be empty.'; return; }
+          editButton.disabled = true;
+          try {
+            await update(ref(db, 'profiles/' + uid), {
+              name: nextName.trim(),
+              team: nextTeam.trim() || 'Unassigned',
+              updatedAt: serverTimestamp(),
+              updatedBy: auth.currentUser.uid
+            });
+            await writeAudit('employee.updated', uid);
+            $('actionError').textContent = 'Employee details updated.';
+          } catch {
+            $('actionError').textContent = 'Employee details could not be updated. Check Firebase rules.';
+          } finally { editButton.disabled = false; }
+        };
+        actions.append(editButton, statusButton, archiveButton);
         card.append(details, actions);
         $('employeeList').append(card);
 
