@@ -107,7 +107,7 @@ async function loadDashboardData(user) {
       $('messageEmployee').replaceChildren(new Option('Select employee', ''));
 
       for (const [uid, profile] of Object.entries(employees)) {
-        const employeeRow = makeRow(`${profile.name || uid} · `${profile.team || 'Unassigned'}`);
+        const employeeRow = makeRow(`${profile.name || uid} · ${profile.team || "Unassigned"}`);
         employeeRow.style.display = 'flex';
         employeeRow.style.alignItems = 'center';
         employeeRow.style.justifyContent = 'space-between';
