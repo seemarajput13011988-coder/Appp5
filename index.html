@@ -153,11 +153,12 @@ button.ghost:hover,#signOut:hover{background:#f3f2ff}
       </div>
       <details class="register-panel">
         <summary>New employee? Request an account</summary>
-        <form id="employeeRegisterForm" class="login-fields register-fields">
-          <label>Full name<input id="registerName" required maxlength="100" autocomplete="name" placeholder="Your full name"></label>
-          <label>Work email<input id="registerEmail" type="email" required autocomplete="email" placeholder="you@company.com"></label>
-          <label>Create password<input id="registerPassword" type="password" required minlength="6" autocomplete="new-password" placeholder="At least 6 characters"></label>
-          <button type="submit" class="primary-action">Submit registration</button>
+        <form id="signupForm" class="login-fields register-fields">
+          <label>Full name<input id="signupName" required maxlength="100" autocomplete="name" placeholder="Your full name"></label>
+          <label>Work email<input id="signupEmail" type="email" required autocomplete="email" placeholder="you@company.com"></label>
+          <label>Create password<input id="signupPassword" type="password" required minlength="6" autocomplete="new-password" placeholder="At least 6 characters"></label>
+          <label>Confirm password<input id="signupConfirm" type="password" required minlength="6" autocomplete="new-password" placeholder="Re-enter your password"></label>
+          <button id="signupButton" type="submit" class="primary-action">Submit registration</button>
         </form>
         <p class="hint">Your account stays pending until an administrator approves it.</p>
       </details>
