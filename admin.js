@@ -107,9 +107,53 @@ async function loadDashboardData(user) {
       $('messageEmployee').replaceChildren(new Option('Select employee', ''));
 
       for (const [uid, profile] of Object.entries(employees)) {
-        $('employeeList').append(
-          makeRow(`${profile.name || uid} · ${profile.team || 'Unassigned'}`)
-        );
+        const employeeRow = makeRow(`${profile.name || uid} · `${profile.team || 'Unassigned'}`);
+        employeeRow.style.display = 'flex';
+        employeeRow.style.alignItems = 'center';
+        employeeRow.style.justifyContent = 'space-between';
+        employeeRow.style.flexWrap = 'wrap';
+        employeeRow.style.gap = '10px';
+        const employeeActions = document.createElement('div');
+        employeeActions.style.display = 'flex';
+        employeeActions.style.gap = '8px';
+        employeeActions.style.flexWrap = 'wrap';
+        const editEmployee = document.createElement('button');
+        editEmployee.type = 'button';
+        editEmployee.textContent = 'Edit';
+        editEmployee.className = 'secondary-action';
+        editEmployee.onclick = async () => {
+          const nextName = window.prompt('Employee name:', profile.name || '');
+          if (nextName === null) return;
+          const nextTeam = window.prompt('Assigned team:', profile.team || 'Unassigned');
+          if (nextTeam === null) return;
+          if (!nextName.trim()) { $('actionError').textContent = 'Employee name cannot be empty.'; return; }
+          editEmployee.disabled = true;
+          try {
+            await update(ref(db, `profiles/${uid}`), { name: nextName.trim(), team: nextTeam.trim() || 'Unassigned' });
+            $('actionError').textContent = 'Employee details updated.';
+          } catch (error) {
+            $('actionError').textContent = 'Could not edit employee. Check Firebase rules and try again.';
+          } finally { editEmployee.disabled = false; }
+        };
+        const deactivateEmployee = document.createElement('button');
+        deactivateEmployee.type = 'button';
+        deactivateEmployee.textContent = profile.active === false || profile.status === 'inactive' ? 'Inactive' : 'Deactivate';
+        deactivateEmployee.disabled = profile.active === false || profile.status === 'inactive';
+        deactivateEmployee.className = 'secondary-action';
+        deactivateEmployee.onclick = async () => {
+          if (!window.confirm(`Deactivate ${profile.name || uid}? Existing attendance and task history will be kept.`)) return;
+          deactivateEmployee.disabled = true;
+          try {
+            await update(ref(db, `profiles/${uid}`), { active: false, status: 'inactive' });
+            $('actionError').textContent = 'Employee deactivated. Historical records were preserved.';
+          } catch (error) {
+            $('actionError').textContent = 'Could not deactivate employee. Check Firebase rules and try again.';
+            deactivateEmployee.disabled = false;
+          }
+        };
+        employeeActions.append(editEmployee, deactivateEmployee);
+        employeeRow.append(employeeActions);
+        $('employeeList').append(employeeRow);
 
         $('assignee').add(
           new Option(profile.name || uid, uid)
