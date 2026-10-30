@@ -1,0 +1,39 @@
+name: Website validation
+
+on:
+  pull_request:
+    branches:
+      - repair/admin-portal
+      - main
+  push:
+    branches:
+      - enterprise-os/foundation
+      - repair/admin-portal
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate-website:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate JavaScript, JSON, and HTML wiring
+        run: node scripts/validate.mjs
+      - name: Build website bundle
+        run: npm run build:web
+      - name: Verify packaged website files
+        run: |
+          test -s dist/index.html
+          test -s dist/launcher.html
+          test -s dist/employee.html
+          test -s dist/admin.html
+          test -s dist/employee.js
+          test -s dist/admin.js
+          test -s dist/firebase.js

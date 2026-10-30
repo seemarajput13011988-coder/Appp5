@@ -1,0 +1,67 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '**'
+  push:
+    paths:
+      - 'app.html'
+      - 'index.html'
+      - 'admin.html'
+      - 'employee.js'
+      - 'employee-requests.js'
+      - 'admin.js'
+      - 'enterprise-admin.js'
+      - 'firebase.js'
+      - 'manifest.webmanifest'
+      - 'icon.svg'
+      - 'sw.js'
+      - 'scripts/**'
+      - 'capacitor.config.json'
+      - 'package.json'
+      - '.github/workflows/android-apk.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Build web assets
+        run: |
+          npm install
+          npm run build:web
+      - name: Generate Android project
+        run: |
+          npx cap add android
+          npx cap sync android
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+      - name: Upload installable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kb-enterprise-os-android-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14

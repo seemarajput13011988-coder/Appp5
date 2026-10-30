@@ -1,11 +1,45 @@
 {
-  "name": "appp5",
-  "version": "1.0.0",
+  "name": "kb-enterprise-os",
+  "version": "0.2.0",
   "private": true,
-  "description": "A minimal JavaScript app made accessible for editing by ChatGPT.",
-  "main": "server.js",
+  "description": "K&B NET SERVICE workforce and enterprise operations app",
+  "main": "electron/main.cjs",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "build:web": "node scripts/build-web.mjs",
+    "desktop:dev": "npm run build:web && electron .",
+    "desktop:win": "npm run build:web && electron-builder --win portable",
+    "android:sync": "npm run build:web && cap sync android"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/cli": "^7.4.3",
+    "@capacitor/core": "^7.4.3",
+    "electron": "^37.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "in.kandbnetservice.enterprise",
+    "productName": "K&B Enterprise OS",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "artifactName": "KB-Enterprise-OS-${version}-${arch}.${ext}"
   }
 }

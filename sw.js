@@ -1,5 +1,5 @@
-const CACHE = 'kb-workforce-shell-v1';
-const SHELL = ['./', './index.html', './admin.html', './employee.js', './admin.js', './firebase.js', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'kb-enterprise-shell-v3';
+const SHELL = ['./', './app.html', './index.html', './admin.html', './employee.js', './employee-requests.js', './admin.js', './enterprise-admin.js', './firebase.js', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));

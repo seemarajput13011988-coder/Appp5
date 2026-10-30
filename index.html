@@ -12,6 +12,100 @@
   <style>
     #workspace>div:not(:first-child){border:1px solid #e2e8f0;border-radius:18px;padding:18px;background:#fff}#workspace>div:nth-child(2){background:#eef2ff;border-color:#c7d2fe}#workspace #tasks>article{border:1px solid #e2e8f0;border-radius:14px;padding:14px;margin:12px 0;background:#f8fafc}#workspace>div:first-child p{margin:0;color:#64748b}#workspace>div:first-child h2{margin:3px 0}
   </style>
+  <style>
+  /* K&B workforce visual system; local CSS, no Tailwind dependency */
+  :root{--kb-ink:#132238;--kb-muted:#64748b;--kb-blue:#1d4ed8;--kb-violet:#5b4de8;--kb-line:#dbe4f0;--kb-canvas:#f3f6fc;--kb-teal:#0f766e}
+  body{background:radial-gradient(ellipse at 15% 0%,#dbeafe 0,transparent 38%),var(--kb-canvas);color:var(--kb-ink)}
+  main{margin:24px auto!important;width:min(100% - 24px,720px)!important;min-height:calc(100vh - 48px)!important;border:1px solid #dbe4f0;border-radius:28px;overflow:hidden;box-shadow:0 24px 70px #17255418!important}
+  header{background:linear-gradient(135deg,#101b35 0%,#273a78 58%,#5146c8 100%)!important;padding-top:32px!important}
+  header .brand,header .text-indigo-300{color:#c7d2fe}
+  header .bg-indigo-500\/20{background:#ffffff20!important;border:1px solid #ffffff24}
+  #login{padding-top:28px;padding-bottom:32px}
+  #login h2{font-size:1.65rem;color:#172554}
+  #login>p{color:#64748b}
+  #workspace{padding-top:22px;padding-bottom:30px;gap:18px}
+  #workspace>div{border:1px solid var(--kb-line);border-radius:20px;padding:20px;background:#fff;box-shadow:0 5px 18px #0f172a08}
+  #workspace>div:first-child{background:linear-gradient(115deg,#fff,#f4f7ff);border-color:#dbeafe}
+  #workspace>div:first-child h2{color:#172554}
+  #workspace>div:nth-child(2){background:linear-gradient(135deg,#edf3ff,#f6f3ff);border-color:#c7d2fe}
+  #workspace>div:nth-child(2)>p:first-child{color:#4338ca}
+  #workspace h3{color:#172554;font-size:1.05rem}
+  #workspace .panel{background:#fff}
+  label{color:#334155}
+  input,textarea,select{border-color:#cbd5e1;background:#fff;box-shadow:0 1px 2px #0f172a06}
+  input:focus,textarea:focus,select:focus{border-color:#6366f1;box-shadow:0 0 0 4px #6366f126}
+  button{background:linear-gradient(135deg,#4f46e5,#3730a3);box-shadow:0 3px 8px #4338ca20;transition:transform .15s,filter .15s}
+  button:hover{filter:brightness(1.06);transform:translateY(-1px)}
+  button.ghost,#resetPassword{background:#fff;color:#4338ca;border:1px solid #c7d2fe;box-shadow:none}
+  #endShift{background:#fff;color:#4338ca;border:1px solid #c7d2fe;box-shadow:none}
+  .task,#workspace #tasks>article,#myTickets>article,#announcements>article{background:#f8faff;border-color:#dbe5f2;border-radius:16px}
+  #connectionStatus{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:10px 12px;border-radius:12px}
+  #actionError,#loginError{background:#fff1f2;border-radius:10px;padding:8px}
+  .approval-steps{display:grid;gap:0;margin:24px 0 20px;position:relative}.approval-step{position:relative;display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:12px;min-height:76px;padding:14px 12px 14px 0;background:transparent!important;border:0!important;border-radius:0!important;color:#64748b;font-weight:650}.approval-step:before{content:"";grid-column:1;grid-row:1;width:34px;height:34px;border:2px solid #cbd5e1;border-radius:50%;background:#fff;display:grid;place-items:center;z-index:1}.approval-step:after{content:"";position:absolute;left:16px;top:49px;height:27px;width:2px;background:#cbd5e1}.approval-step:last-child:after{display:none}.approval-step.done:before{content:"✓";background:#059669;color:#fff;border-color:#059669;text-align:center;line-height:30px}.approval-step.current:before{content:"";border:8px solid #4f46e5;box-shadow:0 0 0 5px #e0e7ff}.approval-step.done{color:#047857}.approval-step.current{color:#3730a3}.approval-step:after{background:#dbe3ef}.approval-step.done:after{background:#10b981}.approval-badge{display:inline-flex;align-items:center;border-radius:999px;padding:6px 10px;background:#dcfce7;color:#166534;font-size:.8rem;font-weight:800}.approval-badge.pending{background:#fef3c7;color:#92400e}.approval-badge.rejected{background:#fee2e2;color:#991b1b}#workerApprovalTracker .approval-steps{margin:14px 0 8px}#approvalMessage{line-height:1.65;border-radius:14px;background:#f8fafc;padding:14px;color:#334155}#approvalSignOut{margin-top:16px;width:100%}#approvalStatus .panel{padding:clamp(18px,5vw,28px);border:1px solid #dbe4f0;border-radius:22px;background:linear-gradient(145deg,#fff,#f8faff);box-shadow:0 12px 35px #1725540d}#approvalStatus h2{font-size:1.45rem;margin-bottom:8px}#approvalAccount{overflow-wrap:anywhere;margin:0;color:#64748b}#login details{min-width:0}#login summary{padding:12px 14px;border:1px solid #dbe4f0;border-radius:12px;background:#f8faff;font-weight:700}#login details[open] summary{margin-bottom:12px}#login button,#login input{width:100%;min-width:0}#login .ghost{min-height:46px}#loginError{overflow-wrap:anywhere;min-height:0}#workspace>div:first-child{align-items:center;flex-wrap:wrap}#workspace>div:first-child>div{min-width:0;flex:1}#workspace>div:first-child button{flex:0 0 auto}#workspace .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}#workspace .actions>*{width:100%;min-width:0}#workspace input,#workspace textarea,#workspace select{display:block;min-width:0;width:100%}#workspace #ticketForm button{width:100%}#workspace .chat-compose{align-items:stretch}#workspace .chat-compose input{min-width:0;flex:1}#workspace .chat-compose button{min-width:84px}#workspace>div{min-width:0;overflow-wrap:anywhere}@media(max-width:420px){#workspace .actions{grid-template-columns:1fr}#workspace .chat-compose{display:grid!important;grid-template-columns:minmax(0,1fr)}#workspace .chat-compose button{width:100%}}.signup-panel{border:1px solid #c7d2fe;border-radius:16px;padding:15px;background:#f8faff}.signup-panel summary{cursor:pointer;color:#4338ca;font-weight:700}.signup-panel form{display:grid;gap:12px}.signup-panel input{width:100%}#gpsStatus{font-size:.85rem;line-height:1.5;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid #c7d2fe;color:#3730a3}
+  @media(max-width:520px){main{width:100%!important;margin:0 auto!important;min-height:100vh!important;border-radius:0;border:0}header{border-radius:0 0 24px 24px}#workspace>div{padding:16px!important}}
+
+  .chat-thread{display:flex!important;flex-direction:column;gap:12px;min-height:160px;max-height:430px;overflow-y:auto;padding:16px!important;border:1px solid #dbe4f0;border-radius:16px;background:#f8fafc!important;margin-top:14px}
+  .chat-message{max-width:min(85%,520px);padding:11px 14px;border-radius:15px;background:#fff;border:1px solid #dbe4f0;align-self:flex-start;overflow-wrap:anywhere}
+  .chat-message.mine{align-self:flex-end;background:#e0e7ff;border-color:#c7d2fe}
+  .chat-message p{margin:5px 0 0;white-space:pre-wrap;line-height:1.45}
+  .chat-meta{font-size:.75rem;color:#64748b;font-weight:650}
+  .chat-compose{display:flex!important;flex-direction:row!important;align-items:center;gap:10px;margin-top:12px}
+  .chat-compose input{flex:1;min-width:0}
+  .chat-compose button{flex:0 0 auto}
+  @media(max-width:520px){.chat-compose{flex-wrap:wrap}.chat-compose button{width:100%}}
+</style>
+  <style id="enterprise-ui-overrides">
+
+/* K&B Enterprise OS employee workspace visual refresh — presentation only */
+:root{color-scheme:light;--kb-ink:#172033;--kb-muted:#667085;--kb-line:#e4e9f2;--kb-brand:#5145cd;--kb-soft:#f4f6fb}
+html{min-height:100%;background:var(--kb-soft)}
+body.bg-slate-50,body{background:radial-gradient(circle at 90% 0,#e4e8ff 0,transparent 32%),#f4f6fb;color:var(--kb-ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{width:min(1160px,calc(100% - 32px));min-height:calc(100vh - 40px);margin:20px auto;background:#fff;border:1px solid #e7eaf2;border-radius:26px;overflow:hidden;box-shadow:0 22px 70px rgba(26,35,70,.10)}
+body>main>header{padding:30px clamp(22px,4vw,42px);background:linear-gradient(120deg,#111a32,#25245d 72%,#5145cd);border-radius:0;color:#fff}
+body>main>header h1{font-size:clamp(25px,3vw,34px);letter-spacing:-.035em;line-height:1.15}
+body>main>header p{color:#c4cbe0}
+body>main>header .bg-indigo-500\/20{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.15)}
+section{padding:clamp(18px,3vw,30px)}
+section#login{max-width:760px;margin:0 auto;display:grid;gap:16px}
+section#login h2{font-size:clamp(23px,3vw,30px);letter-spacing:-.03em}
+section#login details,section#login .signup-panel{display:block;padding:17px;border:1px solid var(--kb-line);border-radius:16px;background:#fbfcff}
+summary{cursor:pointer;font-weight:750;color:#4338a8;padding:3px}
+label{gap:8px;color:#344054;font-weight:650}
+input,textarea,select{min-height:46px;border:1px solid #d6dceb;border-radius:12px;padding:12px 14px;background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.03)}
+input:focus,textarea:focus,select:focus{outline:3px solid rgba(81,69,205,.15);border-color:#7167dc}
+button{min-height:44px;border-radius:12px;padding:11px 16px;background:var(--kb-brand);box-shadow:0 2px 5px rgba(50,45,130,.12);transition:transform .15s,background .15s,box-shadow .15s}
+button:hover{background:#4035b0;box-shadow:0 5px 14px rgba(50,45,130,.16)}
+button:active{transform:translateY(1px)}
+button.ghost,#signOut{background:#fff;color:#4338a8;border:1px solid #d9dcf4;box-shadow:none}
+button.ghost:hover,#signOut:hover{background:#f3f2ff}
+#workspace{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:18px;padding:clamp(18px,3vw,30px)}
+#workspace>div{min-width:0}
+#workspace>div:first-child{grid-column:1/-1;padding:0 0 14px;border-bottom:1px solid var(--kb-line)}
+#workspace>div:first-child h2{font-size:23px;letter-spacing:-.025em}
+#workerApprovalTracker{grid-column:1/-1}
+#workspace>div:nth-child(3){grid-column:1/-1;background:linear-gradient(135deg,#f1f2ff,#f8f8ff);border:1px solid #dedfff;border-radius:20px;padding:22px}
+#workspace>div:not(:first-child){border:1px solid var(--kb-line);border-radius:18px;padding:20px;background:#fff;box-shadow:0 5px 18px rgba(20,30,60,.035)}
+#workspace>div:nth-child(3) h3{font-size:24px;letter-spacing:-.025em}
+#workspace h3{margin-bottom:10px;color:#202945}
+#workspace .panel{border:1px solid var(--kb-line);border-radius:18px;background:#fff;padding:20px}
+#workspace .row{gap:12px}
+#workspace .actions{display:flex;gap:10px}
+#workspace .actions>*{min-width:0;flex:1}
+#workspace .task,#tasks>*,#myTickets>*,#announcements>*,#employeeMessages>*{border:1px solid var(--kb-line);border-radius:14px;padding:15px;margin:10px 0;background:#fbfcff;overflow-wrap:anywhere}
+#gpsStatus,#connectionStatus{font-size:13px;color:var(--kb-muted);line-height:1.5}
+.approval-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}
+.approval-step{border:1px solid #e0e4ee;border-radius:12px;background:#f7f8fc;padding:12px;font-size:13px;font-weight:650;color:#667085}
+.approval-step.done{background:#edf9f2;border-color:#b8e5c8;color:#18794e}
+.approval-badge{display:inline-flex;align-items:center;border-radius:999px;background:#fef3c7;color:#92400e;padding:6px 10px;font-size:12px;font-weight:800}
+#ticketForm,#employeeRequestForm,#employeeMessageForm{display:grid;gap:12px}
+#employeeMessages{display:grid;gap:10px}
+#employeeMessageText,#taskFeedback,#actionError{overflow-wrap:anywhere}
+.muted{color:var(--kb-muted)}
+.error{color:#b42318}
+@media(min-width:900px){#workspace{grid-template-columns:repeat(2,minmax(0,1fr))}#workspace>div:nth-child(3){grid-column:1/-1}}
+@media(max-width:700px){main{width:100%;min-height:100vh;margin:0;border-radius:0;border-left:0;border-right:0}body>main>header{padding:25px 20px}#workspace{grid-template-columns:1fr;gap:14px}#workspace>div:first-child,#workerApprovalTracker,#workspace>div:nth-child(3){grid-column:1}#workspace>div:not(:first-child){padding:16px}.approval-steps{grid-template-columns:1fr}.approval-step{padding:10px}.actions{flex-direction:column}section{padding:18px}section#login{padding:22px 18px}}
+
+  </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
 
@@ -28,11 +122,13 @@
   </header>
 
   <section id="authLoading" class="p-6" role="status">Restoring your saved session…</section>
+  <section id="approvalStatus" class="hidden p-6"><div class="panel"><h2>Account approval status</h2><p id="approvalAccount" class="muted"></p><div class="approval-steps"><div id="approvalStep1" class="approval-step">1. Account created</div><div id="approvalStep2" class="approval-step">2. Admin review</div><div id="approvalStep3" class="approval-step">3. Workspace access</div></div><p id="approvalMessage" role="status">Checking your application…</p><button id="approvalSignOut" type="button" class="ghost">Sign out</button></div></section>
   <section id="login" class="hidden p-6 space-y-4">
     <h2 class="font-bold text-xl">Welcome back</h2>
-    <p class="text-slate-500 text-sm">Sign in with your Worker ID and assigned team.</p>
+    <p class="text-slate-500 text-sm">Sign in using your approved employee email account.</p>
+    <p class="muted" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:12px">Worker ID and team-based sign-in are not active yet. Use email sign-in below until the secure login service is deployed.</p>
 
-    <form id="workerLoginForm" class="grid gap-4">
+    <form id="workerLoginForm" class="hidden grid gap-4">
       <label class="block text-sm font-semibold">Worker ID
         <input id="workerId" required autocomplete="username" class="mt-2 w-full border rounded-xl p-3 outline-indigo-500" placeholder="Enter Worker ID">
       </label>
@@ -45,8 +141,8 @@
       <button id="workerSignIn" type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl p-3 w-full font-bold">Secure Login</button>
     </form>
 
-    <details>
-      <summary class="cursor-pointer text-sm text-indigo-700">Use existing email sign-in</summary>
+    <details open>
+      <summary class="cursor-pointer text-sm text-indigo-700">Employee email sign-in</summary>
       <label class="block text-sm font-semibold mt-3">Email
         <input id="email" type="email" autocomplete="username" class="mt-2 w-full border rounded-xl p-3 outline-indigo-500" placeholder="employee@company.com">
       </label>
@@ -57,11 +153,13 @@
       <button id="resetPassword" type="button" class="ghost w-full mt-2">Reset password</button>
     </details>
     <button id="googleSignIn" type="button" class="ghost">Continue with Google</button>
+    <details id="signupPanel" class="signup-panel"><summary>Create a new employee account</summary><form id="signupForm" class="grid gap-3 mt-3"><label>Full name<input id="signupName" required maxlength="80" autocomplete="name"></label><label>Email<input id="signupEmail" required type="email" autocomplete="email"></label><label>Password<input id="signupPassword" required type="password" minlength="6" autocomplete="new-password"></label><label>Confirm password<input id="signupConfirm" required type="password" minlength="6" autocomplete="new-password"></label><button id="signupButton" type="submit">Create account and request approval</button></form></details>
     <p class="muted">First-time users will need admin approval before accessing the workspace.</p>
     <p id="loginError" role="alert" class="text-sm text-rose-600"></p>
   </section>
 
   <section id="workspace" class="hidden p-6 space-y-5">
+    <div id="workerApprovalTracker" class="panel hidden"><div class="row"><h3>Account approval</h3><span id="workerApprovalBadge" class="approval-badge">Checking</span></div><div class="approval-steps"><div id="workerApprovalStep1" class="approval-step done">Account created</div><div id="workerApprovalStep2" class="approval-step done">Administrator review</div><div id="workerApprovalStep3" class="approval-step done">Workspace access</div></div><p id="workerApprovalNote" class="muted">Your account status</p></div>
     <div class="flex justify-between items-center">
       <div>
         <p class="text-slate-500 text-sm">Signed in as</p>
@@ -80,6 +178,13 @@
         <button id="startShift" class="flex-1 bg-indigo-600 text-white rounded-xl p-3 font-semibold">Start shift</button>
         <button id="endShift" class="flex-1 border border-indigo-200 bg-white text-indigo-700 rounded-xl p-3 font-semibold">End shift</button>
       </div>
+      <p id="gpsStatus" role="status" aria-live="polite" class="mt-3">GPS is not requested yet.</p>
+    </div>
+
+    <div class="rounded-2xl border p-5">
+      <h3 class="font-bold">My daily attendance</h3>
+      <label>Choose date<input id="workerHistoryDate" type="date"></label>
+      <div id="workerHistoryList" class="mt-3">Loading attendance…</div>
     </div>
 
     <div class="rounded-2xl border p-5">
@@ -104,13 +209,27 @@
     </div>
 
     <div class="rounded-2xl border p-5">
+      <h3 class="font-bold">My requests</h3>
+      <p class="muted">Submit leave, expense reimbursement, or salary-advance requests and track administrator decisions.</p>
+      <form id="employeeRequestForm" class="grid gap-3 mt-3">
+        <label>Request type<select id="employeeRequestType" required><option value="leave">Leave</option><option value="expense">Expense reimbursement</option><option value="advance">Salary advance</option></select></label>
+        <label>Requested date<input id="employeeRequestDate" type="date" required></label>
+        <label id="employeeRequestAmountWrap" class="hidden">Amount (₹)<input id="employeeRequestAmount" type="number" min="0.01" max="1000000" step="0.01" placeholder="Amount"></label>
+        <label>Details<textarea id="employeeRequestDetails" required maxlength="1000" placeholder="Explain the request, dates, purpose, or receipt reference"></textarea></label>
+        <button id="employeeRequestSubmit" type="submit">Submit request</button>
+      </form>
+      <p id="employeeRequestFeedback" role="status" class="text-sm text-indigo-700 mt-3"></p>
+      <div id="employeeRequestList" class="mt-3"><p class="muted">Your submitted requests will appear here.</p></div>
+    </div>
+
+    <div class="rounded-2xl border p-5">
       <h3 class="font-bold">Announcements</h3><div id="announcements" class="mt-3"></div>
     </div>
 
     <div class="rounded-2xl border p-5">
       <h3 class="font-bold">Message your administrator</h3>
-      <div id="employeeMessages" class="mt-3"></div>
-      <form id="employeeMessageForm" class="flex gap-2 mt-3"><input id="employeeMessageText" required maxlength="1000" placeholder="Write a message"><button>Send</button></form>
+      <div id="employeeMessages" class="chat-thread" role="log" aria-label="Messages with administrator" aria-live="polite"></div>
+      <form id="employeeMessageForm" class="chat-compose"><input id="employeeMessageText" required maxlength="1000" placeholder="Write a message"><button>Send</button></form>
     </div>
 
     <p id="connectionStatus" class="muted" role="status"></p>
@@ -120,6 +239,7 @@
 </main>
 
 <script type="module" src="./employee.js"></script>
+<script type="module" src="./employee-requests.js"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));</script>
 </body>
 </html>

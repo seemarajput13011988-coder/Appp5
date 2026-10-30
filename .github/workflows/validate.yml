@@ -1,0 +1,50 @@
+name: Validate Enterprise OS Source
+
+on:
+  push:
+    branches:
+      - enterprise-os/foundation
+    paths:
+      - '**'
+  pull_request:
+    paths:
+      - '**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check JavaScript syntax
+        run: |
+          node --check server.js
+          node --check scripts/build-web.mjs
+          node --check electron/main.cjs
+          node --input-type=module --check < employee.js
+          node --input-type=module --check < employee-requests.js
+          node --input-type=module --check < admin.js
+          node --input-type=module --check < enterprise-admin.js
+      - name: Validate JSON and Firebase rules syntax
+        run: |
+          node -e "for (const f of ['package.json','capacitor.config.json','database.rules.json']) { JSON.parse(require('fs').readFileSync(f,'utf8')); console.log('Valid JSON:', f); }"
+      - name: Build static assets
+        run: npm run build:web
+      - name: Verify packaged entry points
+        run: |
+          test -s dist/app.html
+          test -s dist/index.html
+          test -s dist/employee.html
+          test -s dist/launcher.html
+          test -s dist/admin.html
+          test -s dist/enterprise-admin.js
+          test -s dist/employee-requests.js
