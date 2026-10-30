@@ -25,6 +25,12 @@
 @media(max-width:799px){#dashboard nav{padding-bottom:5px}#dashboard aside{border-radius:0 0 18px 18px}#dashboard nav button{font-size:12px;padding:10px}}
 @media(max-width:600px){#taskForm{grid-template-columns:1fr}#taskForm>*{grid-column:1/-1}.page>div,.page form{padding:16px}.page .grid strong{font-size:1.7rem}}
 </style>
+<style id="kb-admin-ux-v3">
+:root{--kb-ink:#17223a;--kb-muted:#738099;--kb-line:#e3e8f2;--kb-brand:#5147d8;--kb-brand-soft:#f0efff;--kb-canvas:#f4f6fb}
+html{background:var(--kb-canvas);scroll-behavior:smooth}body{font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;letter-spacing:-.008em;color:var(--kb-ink);line-height:1.5}h1,h2,h3,h4{letter-spacing:-.03em;line-height:1.22}p{line-height:1.6}button,input,select,textarea{font-family:inherit;letter-spacing:normal}button{transition:transform .16s ease,background-color .16s ease,border-color .16s ease,box-shadow .16s ease}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #7167e655;outline-offset:2px}
+#dashboard aside{display:flex;flex-direction:column;align-items:stretch;gap:8px}#dashboard aside nav{display:flex;flex-direction:column;align-items:stretch;gap:4px;margin:18px 0 10px}#dashboard .nav-group-label{padding:16px 12px 5px;color:#9ba7c5;font-size:10px;font-weight:850;letter-spacing:.15em;line-height:1;text-transform:uppercase}#dashboard nav button{min-height:42px;border-radius:10px;font-size:13px;font-weight:650;padding:10px 12px}#dashboard nav button[aria-current=page]{background:#5147d8;color:#fff;border-color:#7168e8;box-shadow:0 5px 16px #17133c35}#dashboard #signOut{margin-top:auto}#dashboard main{min-width:0;padding:clamp(18px,3vw,42px)}#dashboard main>div:first-child{position:sticky;top:0;z-index:5;background:rgba(244,246,251,.92);backdrop-filter:blur(14px);padding:8px 0 18px;border-bottom:1px solid var(--kb-line)}#dashboard .page{margin-top:22px;animation:kb-admin-enter .2s ease both}#dashboard .page.hidden{display:none!important}#dashboard .page>div,#dashboard .page form{min-width:0}#dashboard .page h2{font-size:clamp(18px,2vw,22px);font-weight:800}#dashboard .page h3{font-size:16px;font-weight:800}#dashboard .page .muted{font-size:13px;color:var(--kb-muted)}#dashboard .page button{min-height:40px;border-radius:10px;font-weight:700}#dashboard .page input,#dashboard .page select,#dashboard .page textarea{min-height:44px;border-radius:10px}#dashboard .page textarea{resize:vertical}#dashboard .page .grid{align-items:stretch}#dashboard .page .grid>div{min-width:0}#dashboard .page .grid strong{font-size:clamp(25px,3vw,34px);font-variant-numeric:tabular-nums}#dashboard #actionError:empty{display:none}@keyframes kb-admin-enter{from{opacity:.55;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+@media(min-width:800px){#dashboard aside{width:258px;min-width:258px;height:100vh;position:sticky;top:0;overflow-y:auto;padding:25px 15px}#dashboard aside nav{flex:1}#dashboard main{min-width:0}}@media(max-width:799px){#dashboard aside{padding:17px 14px}#dashboard aside nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:12px}#dashboard .nav-group-label{grid-column:1/-1;padding:12px 8px 2px}#dashboard nav button{font-size:12px;padding:9px 10px}#dashboard #signOut{margin-top:10px;width:100%}#dashboard main>div:first-child{position:relative;backdrop-filter:none}#dashboard .page{margin-top:16px}}@media(max-width:480px){#dashboard aside nav{grid-template-columns:1fr 1fr}#dashboard main{padding:16px 12px}#dashboard .page>div,#dashboard .page form{padding:15px!important}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
 </head>
 <body class="bg-slate-100 text-slate-900">
 
@@ -46,16 +52,29 @@
     <div class="text-indigo-300 text-xs font-extrabold tracking-widest">K&B NET SERVICE</div>
     <h2 class="text-xl font-bold mt-2">Operations</h2>
 
-    <nav class="mt-10 space-y-2">
-      <button data-page="overview" class="nav w-full text-left p-3 rounded-xl bg-indigo-600">▦ Overview</button>
-      <button data-page="employees" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">♙ Employees</button>
-      <button data-page="tasks" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">☷ Tasks</button>
-      <button data-page="attendance" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">◷ Attendance</button>
-      <button data-page="access" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Access requests</button>
-      <button data-page="tickets" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Customer tickets</button>
-      <button data-page="announcements" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Announcements</button>
-      <button data-page="messages" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Messages</button>
-      <button data-page="reports" class="nav w-full text-left p-3 rounded-xl hover:bg-slate-800">Exports & audit</button>
+    <nav aria-label="Admin sections">
+      <div class="nav-group-label">Workspace</div>
+      <button data-page="overview" data-title="Overview" class="nav w-full text-left p-3 rounded-xl bg-indigo-600" aria-current="page">▦ Overview</button>
+      <div class="nav-group-label">People &amp; access</div>
+      <button data-page="employees" data-title="Employees" class="nav">♙ Employees</button>
+      <button data-page="workerRecords" data-title="Worker Records" class="nav">▤ Worker Records</button>
+      <button data-page="teams" data-title="Staff Teams" class="nav">♧ Staff Teams</button>
+      <button data-page="access" data-title="Access Requests" class="nav">◉ Access requests</button>
+      <button data-page="employeeRequests" data-title="Leave &amp; Claims" class="nav">▣ Leave &amp; Claims</button>
+      <div class="nav-group-label">Field operations</div>
+      <button data-page="tasks" data-title="Tasks" class="nav">☷ Tasks</button>
+      <button data-page="attendance" data-title="Attendance" class="nav">◷ Attendance</button>
+      <button data-page="gpsmap" data-title="GPS Locations" class="nav">⌖ GPS Locations</button>
+      <button data-page="tickets" data-title="Customer Tickets" class="nav">◇ Customer tickets</button>
+      <div class="nav-group-label">Business management</div>
+      <button data-page="customers" data-title="Customer CRM" class="nav">♧ ISP Customers</button>
+      <button data-page="subscriptions" data-title="Plans &amp; Renewals" class="nav">▤ Plans &amp; Renewals</button>
+      <button data-page="finance" data-title="Finance &amp; Ledger" class="nav">₹ Finance &amp; Ledger</button>
+      <button data-page="inventory" data-title="Inventory &amp; Stock" class="nav">▦ Inventory &amp; Stock</button>
+      <div class="nav-group-label">Communication &amp; reports</div>
+      <button data-page="announcements" data-title="Announcements" class="nav">◈ Announcements</button>
+      <button data-page="messages" data-title="Messages" class="nav">✉ Messages</button>
+      <button data-page="reports" data-title="Exports &amp; Audit" class="nav">▥ Exports &amp; audit</button>
     </nav>
 
     <button id="signOut" class="mt-10 text-sm text-slate-300">Sign out</button>
