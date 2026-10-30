@@ -175,34 +175,6 @@ async function flushOutbox() {
   } catch { $('connectionStatus').textContent = 'Online · queued updates remain saved because synchronization failed.'; }
 }
 
-$('employeeRegisterForm').onsubmit = async event => {
-  event.preventDefault();
-  const button = event.currentTarget.querySelector('button[type="submit"]');
-  const name = $('registerName').value.trim();
-  const email = $('registerEmail').value.trim();
-  const password = $('registerPassword').value;
-  $('loginError').textContent = '';
-  if (!name || !email || password.length < 6) {
-    $('loginError').textContent = 'Enter your name, a valid email, and a password of at least 6 characters.';
-    return;
-  }
-  button.disabled = true;
-  button.textContent = 'Submitting…';
-  try {
-    await setPersistence(auth, browserLocalPersistence);
-    const credential = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(credential.user, { displayName: name });
-    $('loginError').textContent = 'Account created. Your access request is waiting for admin approval.';
-  } catch (error) {
-    if (error.code === 'auth/email-already-in-use') $('loginError').textContent = 'This email already has an account. Sign in instead.';
-    else if (error.code === 'auth/weak-password') $('loginError').textContent = 'Choose a password with at least 6 characters.';
-    else $('loginError').textContent = authErrorMessage(error.code);
-  } finally {
-    button.disabled = false;
-    button.textContent = 'Submit registration';
-  }
-};
-
 $('signIn').onclick = async () => {
   const button = $('signIn');
   button.disabled = true;
