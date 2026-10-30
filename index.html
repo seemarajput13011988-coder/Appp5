@@ -122,6 +122,45 @@ button.ghost:hover,#signOut:hover{background:#f3f2ff}
     input,textarea,select{border-radius:11px}#workspace button{border-radius:11px}
     @media(max-width:760px){main{padding:14px}.login-shell{grid-template-columns:1fr;border-radius:22px}.login-aside{min-height:0;padding:28px}.login-aside h3{font-size:27px;margin:14px 0}.feature-line{padding:10px 0}.login-card{padding:26px 22px}#workspace{margin:12px auto}}
   </style>
+<style id="kb-workspace-ux-v3">
+:root{--kb-ink:#17223a;--kb-muted:#738099;--kb-line:#e3e8f2;--kb-brand:#5147d8;--kb-brand-soft:#f0efff;--kb-canvas:#f4f6fb}
+html{background:var(--kb-canvas);scroll-behavior:smooth}
+body{font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;letter-spacing:-.008em;color:var(--kb-ink);line-height:1.5}
+h1,h2,h3,h4{letter-spacing:-.03em;line-height:1.2}
+p{line-height:1.6}
+button,input,select,textarea{font-family:inherit;letter-spacing:normal}
+button{transition:transform .16s ease,background-color .16s ease,border-color .16s ease,box-shadow .16s ease}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #7167e655;outline-offset:2px}
+#workspace{display:block!important;width:100%;max-width:1200px;margin:0 auto;padding:20px clamp(14px,3vw,32px) 40px!important}
+#workspace>.employee-welcome{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 22px;margin:0 0 18px;background:#fff;border:1px solid var(--kb-line);border-radius:18px;box-shadow:0 5px 18px #24375b08}
+#workspace .employee-welcome h2{font-size:20px;margin:2px 0}
+#workspace .employee-welcome p{margin:0;font-size:12px;color:var(--kb-muted)}
+#workspace .employee-nav{display:flex;gap:7px;padding:8px;margin:0 0 20px;border:1px solid var(--kb-line);border-radius:16px;background:#fff;box-shadow:0 5px 18px #24375b08;overflow-x:auto;scrollbar-width:thin}
+#workspace .employee-nav button{flex:0 0 auto;min-height:42px;border:1px solid transparent;border-radius:11px;background:transparent;color:#58647b;padding:10px 14px;font-size:13px;font-weight:750;white-space:nowrap}
+#workspace .employee-nav button:hover{background:#f4f5fc;color:#342b9a}
+#workspace .employee-nav button[aria-current="page"]{background:var(--kb-brand-soft);border-color:#dfdcff;color:#4438bd;box-shadow:inset 0 0 0 1px #e5e2ff}
+#workspace .employee-view{display:none;animation:kb-enter .22s ease both}
+#workspace .employee-view.is-active{display:block}
+#workspace .employee-view.is-active>.employee-card{display:block}
+#workspace .employee-card{min-width:0;margin:0 0 16px;padding:clamp(18px,2.5vw,26px)!important;background:#fff!important;border:1px solid var(--kb-line)!important;border-radius:18px!important;box-shadow:0 6px 22px #24375b08!important}
+#workspace .employee-card h3{font-size:18px;font-weight:800;color:#202b45;margin:0 0 12px}
+#workspace .employee-card label{display:grid;gap:7px;color:#39465d;font-size:13px;font-weight:700}
+#workspace .employee-card input,#workspace .employee-card select,#workspace .employee-card textarea{min-height:45px;padding:11px 13px;border:1px solid #dce3ef;border-radius:11px;background:#fbfcff;color:#1b2740}
+#workspace .employee-card textarea{min-height:100px;resize:vertical}
+#workspace .employee-card button{min-height:43px;border-radius:11px;font-size:13px;font-weight:750}
+#workspace .employee-card button.bg-indigo-600,#workspace .employee-card button[type=submit],#workspace #startShift{background:#5147d8;color:#fff;border:1px solid #5147d8}
+#workspace .employee-card button:hover{box-shadow:0 5px 14px #2b318016}
+#workspace .employee-card .muted,#workspace .employee-card .text-slate-500{color:var(--kb-muted);font-size:13px}
+#workspace .employee-card #shiftStatus{font-size:clamp(22px,3vw,30px);margin:6px 0}
+#workspace .employee-card #gpsStatus{font-size:12px}
+#workerApprovalTracker{margin-bottom:18px}
+#workerApprovalTracker:not(.hidden){display:block}
+#workspace #connectionStatus,#workspace #actionError{display:block;margin:12px 0 0;padding:12px 15px;border-radius:12px;background:#fff;border:1px solid var(--kb-line);font-size:12px}
+#workspace #actionError:empty,#workspace #connectionStatus:empty{display:none}
+@keyframes kb-enter{from{opacity:.45;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:760px){#workspace{padding:12px 12px 28px!important}#workspace>.employee-welcome{padding:15px;align-items:flex-start}#workspace .employee-nav{margin-bottom:14px;gap:4px}#workspace .employee-nav button{padding:10px 12px;font-size:12px}#workspace .employee-card{padding:17px!important;margin-bottom:12px}#workspace .employee-welcome #signOut{min-height:38px;padding:8px 10px}#workspace .employee-card .flex.gap-3{flex-wrap:wrap}#workspace .employee-card .flex.gap-3>*{min-width:120px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
 </head>
 <body class="bg-slate-50 text-slate-900">
 
