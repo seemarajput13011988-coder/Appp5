@@ -106,6 +106,22 @@ button.ghost:hover,#signOut:hover{background:#f3f2ff}
 @media(max-width:700px){main{width:100%;min-height:100vh;margin:0;border-radius:0;border-left:0;border-right:0}body>main>header{padding:25px 20px}#workspace{grid-template-columns:1fr;gap:14px}#workspace>div:first-child,#workerApprovalTracker,#workspace>div:nth-child(3){grid-column:1}#workspace>div:not(:first-child){padding:16px}.approval-steps{grid-template-columns:1fr}.approval-step{padding:10px}.actions{flex-direction:column}section{padding:18px}section#login{padding:22px 18px}}
 
   </style>
+<style id="kb-redesign-v2">
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#18243a;background:#f3f6fb;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-text-size-adjust:100%;color-scheme:light}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 10% 0%,#e3eaff 0,transparent 36%),#f3f6fb;color:#18243a}button,input,textarea,select{font:inherit}button{cursor:pointer;min-height:44px}button:disabled{opacity:.6;cursor:wait}
+    main{width:min(100%,1160px);min-height:100vh;margin:auto;background:transparent;box-shadow:none;display:flex;flex-direction:column;justify-content:center;padding:28px}
+    body>main>header{display:none}
+    #authLoading{width:min(100%,580px);margin:auto;background:#fff;border:1px solid #e1e7f2;border-radius:18px;padding:24px;box-shadow:0 18px 50px #1b2b4b0d}
+    .login-shell{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(280px,.95fr);width:100%;max-width:980px;margin:auto;background:#fff;border:1px solid #e2e8f2;border-radius:28px;overflow:hidden;box-shadow:0 28px 90px #25385818}
+    .login-card{padding:clamp(24px,5vw,52px);min-width:0}.login-brand-mark{display:grid;place-items:center;width:54px;height:54px;border-radius:17px;background:#4b46d7;color:#fff;font-weight:900;font-size:17px;box-shadow:0 8px 20px #4b46d740;margin-bottom:24px}.eyebrow{font-size:11px;letter-spacing:.15em;font-weight:850;color:#514bd4;margin:0 0 10px}.login-card h2{font-size:clamp(28px,4vw,38px);letter-spacing:-.04em;margin:0 0 8px;color:#17233a}.login-subtitle{color:#748098;line-height:1.65;font-size:14px;margin:0 0 28px}
+    .login-fields{display:grid;gap:14px}.login-fields label{display:grid;gap:7px;font-size:13px;font-weight:750;color:#34425b}.login-fields input,.login-fields select{width:100%;min-width:0;padding:13px 14px;border:1px solid #dce3ef;border-radius:12px;background:#fbfcff;color:#18243a;outline:none;font-size:15px}.login-fields input:focus,.login-fields select:focus{border-color:#6864e8;box-shadow:0 0 0 4px #6864e81c;background:#fff}
+    .primary-action,.secondary-action,.google-action{width:100%;border-radius:12px;padding:13px 16px;font-weight:800}.primary-action{background:#4b46d7;color:#fff;box-shadow:0 8px 18px #4b46d728}.primary-action:hover{background:#3833bc}.secondary-action{background:#fff;color:#4240ba;border:1px solid #d9dcfa}.google-action{background:#f6f7fb;color:#33415a;border:1px solid #e0e5ef;margin-top:14px}
+    .register-panel,.alternate-login{margin-top:18px;border-top:1px solid #edf0f6;padding-top:16px}.register-panel summary,.alternate-login summary{cursor:pointer;font-size:13px;font-weight:800;color:#4641bf;padding:5px 0}.register-fields{margin-top:16px}.hint{font-size:12px;color:#7b879c;line-height:1.5}.login-error{font-size:13px;line-height:1.5;color:#b42340;min-height:1.2em;margin:14px 0 0}
+    .login-aside{background:linear-gradient(150deg,#171d3b,#302d75 58%,#514bd4);color:white;padding:clamp(28px,5vw,52px);display:flex;flex-direction:column;justify-content:center;min-height:540px;position:relative;overflow:hidden}.login-aside:after{content:"";position:absolute;width:290px;height:290px;border:1px solid #ffffff25;border-radius:50%;right:-120px;top:-90px;box-shadow:0 0 0 35px #ffffff08,0 0 0 70px #ffffff05}.aside-tag{font-size:11px;font-weight:850;letter-spacing:.18em;color:#c8c9ff}.login-aside h3{font-size:clamp(26px,3.2vw,38px);line-height:1.15;letter-spacing:-.035em;max-width:340px;margin:22px 0 14px}.login-aside>p{color:#d1d4f4;line-height:1.7;font-size:14px;max-width:340px}.feature-line{display:flex;gap:13px;align-items:center;padding:16px 0;border-top:1px solid #ffffff25;font-size:13px;color:#f0f0ff}.feature-line span{color:#b9b8ff;font-weight:850}
+    #workspace{width:100%;max-width:900px;margin:28px auto;display:grid;gap:18px}.panel,#workspace>div:not(:first-child){background:#fff;border:1px solid #e1e7f2;border-radius:18px;padding:22px;box-shadow:0 8px 28px #25385808}.shift,#workspace>div:nth-child(2){background:#f0f1ff;border-color:#d8d8ff}.task,#workspace #tasks>article{background:#f8faff;border:1px solid #e4e9f4;border-radius:14px;padding:15px;margin:12px 0}.actions{display:flex;gap:10px;margin-top:16px}.actions>*{flex:1}.muted{color:#748098}.error{color:#b42340;min-height:1.25em}
+    input,textarea,select{border-radius:11px}#workspace button{border-radius:11px}
+    @media(max-width:760px){main{padding:14px}.login-shell{grid-template-columns:1fr;border-radius:22px}.login-aside{min-height:0;padding:28px}.login-aside h3{font-size:27px;margin:14px 0}.feature-line{padding:10px 0}.login-card{padding:26px 22px}#workspace{margin:12px auto}}
+  </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
 
@@ -123,39 +139,48 @@ button.ghost:hover,#signOut:hover{background:#f3f2ff}
 
   <section id="authLoading" class="p-6" role="status">Restoring your saved session…</section>
   <section id="approvalStatus" class="hidden p-6"><div class="panel"><h2>Account approval status</h2><p id="approvalAccount" class="muted"></p><div class="approval-steps"><div id="approvalStep1" class="approval-step">1. Account created</div><div id="approvalStep2" class="approval-step">2. Admin review</div><div id="approvalStep3" class="approval-step">3. Workspace access</div></div><p id="approvalMessage" role="status">Checking your application…</p><button id="approvalSignOut" type="button" class="ghost">Sign out</button></div></section>
-  <section id="login" class="hidden p-6 space-y-4">
-    <h2 class="font-bold text-xl">Welcome back</h2>
-    <p class="text-slate-500 text-sm">Sign in using your approved employee email account.</p>
-    <p class="muted" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:12px">Worker ID and team-based sign-in are not active yet. Use email sign-in below until the secure login service is deployed.</p>
-
-    <form id="workerLoginForm" class="hidden grid gap-4">
-      <label class="block text-sm font-semibold">Worker ID
-        <input id="workerId" required autocomplete="username" class="mt-2 w-full border rounded-xl p-3 outline-indigo-500" placeholder="Enter Worker ID">
-      </label>
-      <label class="block text-sm font-semibold">Assigned Team Group
-        <select id="workerTeam" required disabled class="mt-2 w-full border rounded-xl p-3"><option value="">Loading teams…</option></select>
-      </label>
-      <label class="block text-sm font-semibold">Password
-        <input id="workerPassword" type="password" required autocomplete="current-password" class="mt-2 w-full border rounded-xl p-3 outline-indigo-500">
-      </label>
-      <button id="workerSignIn" type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl p-3 w-full font-bold">Secure Login</button>
-    </form>
-
-    <details open>
-      <summary class="cursor-pointer text-sm text-indigo-700">Employee email sign-in</summary>
-      <label class="block text-sm font-semibold mt-3">Email
-        <input id="email" type="email" autocomplete="username" class="mt-2 w-full border rounded-xl p-3 outline-indigo-500" placeholder="employee@company.com">
-      </label>
-      <label class="block text-sm font-semibold mt-3">Password
-        <input id="password" type="password" autocomplete="current-password" class="mt-2 w-full border rounded-xl p-3 outline-indigo-500">
-      </label>
-      <button id="signIn" type="button" class="bg-indigo-600 text-white rounded-xl p-3 w-full mt-3">Sign in with email</button>
-      <button id="resetPassword" type="button" class="ghost w-full mt-2">Reset password</button>
-    </details>
-    <button id="googleSignIn" type="button" class="ghost">Continue with Google</button>
-    <details id="signupPanel" class="signup-panel"><summary>Create a new employee account</summary><form id="signupForm" class="grid gap-3 mt-3"><label>Full name<input id="signupName" required maxlength="80" autocomplete="name"></label><label>Email<input id="signupEmail" required type="email" autocomplete="email"></label><label>Password<input id="signupPassword" required type="password" minlength="6" autocomplete="new-password"></label><label>Confirm password<input id="signupConfirm" required type="password" minlength="6" autocomplete="new-password"></label><button id="signupButton" type="submit">Create account and request approval</button></form></details>
-    <p class="muted">First-time users will need admin approval before accessing the workspace.</p>
-    <p id="loginError" role="alert" class="text-sm text-rose-600"></p>
+  <section id="login" class="login-shell hidden" aria-labelledby="loginHeading">
+    <div class="login-card">
+      <div class="login-brand-mark">K&amp;B</div>
+      <p class="eyebrow">K&amp;B NET SERVICE · WORKFORCE</p>
+      <h2 id="loginHeading">Welcome back</h2>
+      <p class="login-subtitle">Sign in to your employee workspace. New staff can request access below.</p>
+      <div class="login-fields">
+        <label>Email address<input id="email" type="email" autocomplete="username" placeholder="you@company.com"></label>
+        <label>Password<input id="password" type="password" autocomplete="current-password" placeholder="Enter your password"></label>
+        <button id="signIn" type="button" class="primary-action">Sign in</button>
+        <button id="resetPassword" type="button" class="secondary-action">Forgot password?</button>
+      </div>
+      <details class="register-panel">
+        <summary>New employee? Request an account</summary>
+        <form id="employeeRegisterForm" class="login-fields register-fields">
+          <label>Full name<input id="registerName" required maxlength="100" autocomplete="name" placeholder="Your full name"></label>
+          <label>Work email<input id="registerEmail" type="email" required autocomplete="email" placeholder="you@company.com"></label>
+          <label>Create password<input id="registerPassword" type="password" required minlength="6" autocomplete="new-password" placeholder="At least 6 characters"></label>
+          <button type="submit" class="primary-action">Submit registration</button>
+        </form>
+        <p class="hint">Your account stays pending until an administrator approves it.</p>
+      </details>
+      <details class="alternate-login">
+        <summary>Have a Worker ID instead?</summary>
+        <form id="workerLoginForm" class="login-fields">
+          <label>Worker ID<input id="workerId" required autocomplete="username" placeholder="Enter Worker ID"></label>
+          <label>Assigned team<select id="workerTeam" required disabled><option value="">Loading teams…</option></select></label>
+          <label>Password<input id="workerPassword" type="password" required autocomplete="current-password"></label>
+          <button id="workerSignIn" type="submit" class="secondary-action">Sign in with Worker ID</button>
+        </form>
+      </details>
+      <button id="googleSignIn" type="button" class="google-action">Continue with Google</button>
+      <p id="loginError" role="alert" class="error login-error"></p>
+    </div>
+    <div class="login-aside">
+      <span class="aside-tag">ONE WORKSPACE</span>
+      <h3>Work. Connect. Get things done.</h3>
+      <p>Shift records, assigned tasks, customer tickets and team updates in one place.</p>
+      <div class="feature-line"><span>01</span> Attendance and shift status</div>
+      <div class="feature-line"><span>02</span> Assigned work and service tickets</div>
+      <div class="feature-line"><span>03</span> Messages and announcements</div>
+    </div>
   </section>
 
   <section id="workspace" class="hidden p-6 space-y-5">
