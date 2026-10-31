@@ -712,7 +712,14 @@ function setupEmployeeWorkspaceNavigation() {
   for (const [index, group] of groups.entries()) {
     const button = document.createElement('button');
     button.type = 'button';
-    button.textContent = group.icon + '  ' + group.label;
+    const icon = document.createElement('span');
+    icon.className = 'employee-nav-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = group.icon;
+    const label = document.createElement('span');
+    label.className = 'employee-nav-label';
+    label.textContent = group.label;
+    button.append(icon, label);
     button.setAttribute('role', 'tab');
     button.setAttribute('aria-controls', 'employee-view-' + group.id);
     button.setAttribute('aria-selected', index === 0 ? 'true' : 'false');
