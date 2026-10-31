@@ -249,6 +249,42 @@ body>main>header{display:none!important}
 }
 @media(max-width:360px){#workspace .employee-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
+
+<style id="kb-mobile-contrast-nav-fix">
+/* Fix: keep employee controls readable and mobile navigation inside the viewport. */
+#workspace .employee-card{color:#18243b!important}
+#workspace .employee-card h3,
+#workspace .employee-card label,
+#workspace .employee-card p,
+#workspace .employee-card li,
+#workspace .employee-card strong,
+#workspace .employee-card span:not(.employee-quick-icon){color:inherit}
+#workspace .employee-card .muted,
+#workspace .employee-card .text-slate-500,
+#workspace .employee-card small{color:#66748b!important}
+#workspace .employee-card button{background:#4f46d5;color:#fff;border:1px solid #4f46d5}
+#workspace .employee-card button#endShift{background:#fff;color:#3730a3;border-color:#cfd3f8}
+#workspace .employee-card button.employee-see-all,
+#workspace .employee-card button.secondary-action{background:#f0efff;color:#4038b7;border-color:#dedbff}
+#workspace .employee-card input,
+#workspace .employee-card select,
+#workspace .employee-card textarea{color:#18243b;background:#fff}
+#workspace .employee-card input::placeholder,
+#workspace .employee-card textarea::placeholder{color:#7b879a;opacity:1}
+#workspace .employee-nav{isolation:isolate}
+#workspace .employee-nav button{display:flex;align-items:center;justify-content:center;gap:5px;min-width:0;color:#47536b!important;background:transparent!important;box-shadow:none!important}
+#workspace .employee-nav button[aria-current="page"]{background:#eceeff!important;color:#3730a3!important;border-color:#d9dcff!important}
+@media(max-width:760px){
+  #workspace{padding-bottom:calc(94px + env(safe-area-inset-bottom))!important}
+  #workspace .employee-nav{position:fixed!important;z-index:1000!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;max-width:none!important;display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;align-items:stretch!important;gap:2px!important;margin:0!important;padding:7px 5px calc(7px + env(safe-area-inset-bottom))!important;overflow:visible!important;border:0!important;border-top:1px solid #dfe5f0!important;border-radius:16px 16px 0 0!important;background:rgba(255,255,255,.98)!important;box-shadow:0 -8px 26px rgba(20,32,60,.14)!important;backdrop-filter:blur(14px)}
+  #workspace .employee-nav button{width:100%!important;min-width:0!important;max-width:none!important;min-height:54px!important;padding:6px 1px!important;border:1px solid transparent!important;border-radius:10px!important;font-size:10px!important;font-weight:750!important;line-height:1.15!important;white-space:normal!important;text-align:center!important;overflow-wrap:anywhere!important}
+  #workspace .employee-nav button[aria-current="page"]{background:#eceeff!important;color:#3730a3!important}
+}
+@media(max-width:360px){
+  #workspace .employee-nav button{font-size:9px!important;padding-left:0!important;padding-right:0!important}
+}
+</style>
+
 </head>
 <body class="bg-slate-50 text-slate-900">
 
