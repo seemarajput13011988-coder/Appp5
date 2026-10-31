@@ -741,6 +741,73 @@ function setupEmployeeWorkspaceNavigation() {
       }
     }
   }
+  // Mobile-first home shortcuts: navigate to existing functional sections.
+  const homeView = views.querySelector('#employee-view-home');
+  if (homeView) {
+    const shortcuts = document.createElement('div');
+    shortcuts.className = 'employee-quick-actions';
+    const actions = [
+      { label: 'New ticket', symbol: '◇', target: 'tickets', theme: 'coral' },
+      { label: 'Time logs', symbol: '◷', target: 'attendance', theme: 'blue' },
+      { label: 'My tasks', symbol: '☑', target: 'tasks', theme: 'green' },
+      { label: 'Request leave', symbol: '▣', target: 'requests', theme: 'purple' }
+    ];
+    for (const action of actions) {
+      const shortcut = document.createElement('button');
+      shortcut.type = 'button';
+      shortcut.className = 'employee-quick-action ' + action.theme;
+      const symbol = document.createElement('span');
+      symbol.className = 'employee-quick-icon';
+      symbol.textContent = action.symbol;
+      const label = document.createElement('span');
+      label.textContent = action.label;
+      shortcut.append(symbol, label);
+      shortcut.addEventListener('click', () => {
+        const destination = [...nav.querySelectorAll('button')].find(button => button.getAttribute('aria-controls') === 'employee-view-' + action.target);
+        destination?.click();
+      });
+      shortcuts.append(shortcut);
+    }
+    const shiftCard = homeView.querySelector('.employee-card');
+    if (shiftCard) shiftCard.after(shortcuts);
+    else homeView.append(shortcuts);
+    const preview = document.createElement('div');
+    preview.className = 'employee-home-preview employee-card';
+    const heading = document.createElement('h3');
+    heading.textContent = 'Your assigned tasks';
+    const taskPreview = document.createElement('div');
+    taskPreview.className = 'employee-task-preview';
+    const showAll = document.createElement('button');
+    showAll.type = 'button';
+    showAll.className = 'employee-see-all';
+    showAll.textContent = 'View all tasks';
+    showAll.addEventListener('click', () => {
+      [...nav.querySelectorAll('button')].find(button => button.getAttribute('aria-controls') === 'employee-view-tasks')?.click();
+    });
+    preview.append(heading, taskPreview, showAll);
+    homeView.append(preview);
+    const sourceTasks = $('tasks');
+    const refreshPreview = () => {
+      taskPreview.replaceChildren();
+      if (!sourceTasks) {
+        taskPreview.textContent = 'Task information is unavailable.';
+        return;
+      }
+      const items = [...sourceTasks.children].filter(node => node.nodeType === 1);
+      if (items.length === 0) {
+        taskPreview.textContent = sourceTasks.textContent?.trim() || 'No assigned tasks yet.';
+        return;
+      }
+      for (const item of items.slice(0, 2)) {
+        const summary = document.createElement('div');
+        summary.className = 'employee-task-summary';
+        summary.textContent = item.textContent?.replace(/\\s+/g, ' ').trim().slice(0, 240) || 'Assigned task';
+        taskPreview.append(summary);
+      }
+    };
+    refreshPreview();
+    if (sourceTasks) new MutationObserver(refreshPreview).observe(sourceTasks, {childList:true,subtree:true,characterData:true});
+  }
   welcome.classList.add('employee-welcome');
   welcome.after(nav);
   nav.after(views);
