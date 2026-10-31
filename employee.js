@@ -801,7 +801,7 @@ function setupEmployeeWorkspaceNavigation() {
       for (const item of items.slice(0, 2)) {
         const summary = document.createElement('div');
         summary.className = 'employee-task-summary';
-        summary.textContent = item.textContent?.replace(/\\s+/g, ' ').trim().slice(0, 240) || 'Assigned task';
+        summary.textContent = item.textContent?.replace(/\s+/g, ' ').trim().slice(0, 240) || 'Assigned task';
         taskPreview.append(summary);
       }
     };
