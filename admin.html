@@ -259,6 +259,35 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @media(max-width:1100px){#dashboard #overview>.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){#dashboard #overview>.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#dashboard #overview>.grid>div{padding:14px}}
 </style>
+
+<style id="kb-mobile-contrast-nav-fix">
+/* Admin contrast: navigation stays high-contrast; page actions never inherit white-on-white. */
+#dashboard{color:#17233a}
+#dashboard aside,#dashboard aside h2,#dashboard aside .text-indigo-300{color:#fff}
+#dashboard nav button{color:#dce5f8!important;background:transparent}
+#dashboard nav button[aria-current="page"],#dashboard nav button.bg-indigo-600{color:#fff!important;background:#194d9d!important;border-color:#3264b1!important}
+#dashboard .page{color:#17233a}
+#dashboard .page h2,#dashboard .page h3,#dashboard .page label,#dashboard .page strong{color:#1b2942}
+#dashboard .page p,#dashboard .page .muted{color:#58677e}
+#dashboard .page button{background:#4d47d3;color:#fff;border:1px solid #4d47d3}
+#dashboard .page button.secondary-action,
+#dashboard .page button.border,
+#dashboard .page button#financeAllPeriod{background:#fff;color:#4038b7;border-color:#d6daf2}
+#dashboard input,#dashboard textarea,#dashboard select{color:#17233a;background:#fff}
+#dashboard input::placeholder,#dashboard textarea::placeholder{color:#7a8599;opacity:1}
+@media(max-width:799px){
+ #dashboard aside{width:100%;min-width:0;position:relative;z-index:20}
+ #dashboard aside nav{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:stretch;gap:6px!important;width:100%;overflow:visible!important}
+ #dashboard aside nav .nav-group-label{grid-column:1/-1}
+ #dashboard aside nav button{width:100%;min-width:0;min-height:42px;white-space:normal;overflow-wrap:anywhere;text-align:left;line-height:1.25}
+ #dashboard main{min-width:0;width:100%;padding:18px 12px 28px!important}
+ #dashboard main>div:first-child{position:relative;top:auto}
+}
+@media(max-width:380px){
+ #dashboard aside nav{grid-template-columns:minmax(0,1fr)!important}
+}
+</style>
+
 </head>
 <body class="bg-slate-100 text-slate-900">
 
