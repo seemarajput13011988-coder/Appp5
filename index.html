@@ -219,6 +219,36 @@ body>main>header{display:none!important}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 
+<style id="kb-reference-layout-v5">
+/* Reference-inspired employee dashboard: mobile bottom navigation and home shortcuts */
+#workspace .employee-quick-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:0 0 20px}
+#workspace .employee-quick-action{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-width:0;min-height:112px;padding:14px 8px;background:#fff;border:1px solid #e5eaf3;border-radius:19px;color:#1d2943;box-shadow:0 7px 20px #1e2d4a0a;font-size:13px;font-weight:750;line-height:1.25;text-align:center}
+#workspace .employee-quick-icon{display:grid;place-items:center;width:49px;height:49px;border-radius:14px;font-size:26px;color:#17233a;box-shadow:0 5px 12px #23355b16}
+#workspace .employee-quick-action.coral .employee-quick-icon{background:linear-gradient(135deg,#ffc478,#ff815e)}
+#workspace .employee-quick-action.blue .employee-quick-icon{background:linear-gradient(135deg,#77d8ff,#5e84f9)}
+#workspace .employee-quick-action.green .employee-quick-icon{background:linear-gradient(135deg,#b5ef9d,#46c6a4)}
+#workspace .employee-quick-action.purple .employee-quick-icon{background:linear-gradient(135deg,#e3b4ff,#a078e8)}
+#workspace .employee-home-preview{margin-top:0}
+#workspace .employee-home-preview h3{margin-bottom:13px}
+#workspace .employee-task-summary{padding:13px 14px;margin:8px 0;border:1px solid #e6eaf3;border-radius:13px;background:#fafbff;color:#34435e;font-size:13px;line-height:1.5}
+#workspace .employee-see-all{margin-top:12px;background:#eff0ff;color:#4438bd;box-shadow:none}
+#workspace #employee-view-home .employee-card:first-child{background:linear-gradient(125deg,#17254b,#2d58bb 75%,#315dc6)!important;color:#fff;border:0!important;box-shadow:0 15px 35px #193b8333!important}
+#workspace #employee-view-home .employee-card:first-child h3,#workspace #employee-view-home .employee-card:first-child p,#workspace #employee-view-home .employee-card:first-child #shiftStatus{color:#fff!important}
+#workspace #employee-view-home .employee-card:first-child #gpsStatus{background:#ffffff16;border-color:#ffffff36;color:#e4f9f3}
+#workspace #employee-view-home .employee-card:first-child #startShift{background:#fff;color:#233b9a;border-color:#fff}
+#workspace #employee-view-home .employee-card:first-child #endShift{background:#ffffff16;color:#fff;border:1px solid #ffffff50}
+@media(max-width:760px){
+  #workspace{padding-bottom:100px!important}
+  #workspace .employee-nav{position:fixed;z-index:40;bottom:0;left:0;right:0;margin:0;padding:8px 5px max(9px,env(safe-area-inset-bottom));border:0;border-top:1px solid #dfe6f2;border-radius:19px 19px 0 0;box-shadow:0 -10px 34px #1725541a;display:flex;justify-content:space-around;gap:2px;overflow-x:auto;background:#fffffff5;backdrop-filter:blur(16px)}
+  #workspace .employee-nav button{flex:1 0 0;min-width:58px;max-width:120px;min-height:52px;padding:7px 3px;border:0;border-radius:10px;font-size:10px;font-weight:750;white-space:normal;line-height:1.25;text-align:center}
+  #workspace .employee-nav button[aria-current=page]{background:#eef0ff;color:#4338ca}
+  #workspace .employee-quick-actions{gap:9px}
+  #workspace .employee-quick-action{min-height:102px;padding:10px 4px;font-size:11px;border-radius:15px}
+  #workspace .employee-quick-icon{width:43px;height:43px;font-size:23px;border-radius:12px}
+  #workspace #employee-view-home .employee-card:first-child{border-radius:20px!important}
+}
+@media(max-width:360px){#workspace .employee-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
 </head>
 <body class="bg-slate-50 text-slate-900">
 
