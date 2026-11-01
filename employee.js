@@ -831,7 +831,8 @@ function setupEmployeeWorkspaceNavigation() {
       if (!group) continue;
       button.dataset.fullLabel = group.label;
       button.setAttribute('aria-label', group.label);
-      button.textContent = mobileQuery.matches ? mobileNames[group.id] : group.label;
+      const label = button.querySelector('.employee-nav-label');
+      if (label) label.textContent = mobileQuery.matches ? mobileNames[group.id] : group.label;
     }
   };
   syncNavigationLabels();
