@@ -370,37 +370,47 @@ body>main>header{display:none!important}
 </style>
 
 <style id="kb-employee-contrast-and-icon-fix">
-/* Correct contrast by surface: welcome and content cards are LIGHT; shift hero is DARK. */
-#workspace{color:#202b40!important}
-#workspace>.employee-welcome,
-#workspace>.employee-welcome *,
-#workspace>.employee-welcome #userName{color:#26354d!important}
-#workspace .employee-card{color:#26354d!important}
+/* Employee readability: the original shift panel is LIGHT indigo, not dark. */
+#workspace{color:#1e293b!important}
+#workspace>.employee-welcome{background:transparent!important;color:#1e293b!important}
+#workspace>.employee-welcome *{color:#26354d!important}
+#workspace>.employee-welcome #userName{color:#172554!important;font-weight:800!important}
+#workspace>.employee-welcome #signOut{color:#4338ca!important;background:#eef2ff!important;border:1px solid #dbe3ff!important}
+
+/* Every employee content card uses dark text on a light surface. */
+#workspace .employee-card{background-color:#fff!important;color:#26354d!important;border-color:#e2e8f0!important}
 #workspace .employee-card *:not(button):not(svg):not(path){color:#26354d!important}
 #workspace .employee-card .muted,
 #workspace .employee-card small,
 #workspace .employee-card .text-slate-400,
-#workspace .employee-card .text-slate-500{color:#66748b!important}
+#workspace .employee-card .text-slate-500{color:#64748b!important}
 #workspace .employee-card input,
 #workspace .employee-card textarea,
-#workspace .employee-card select{color:#18243b!important;background:#fff!important}
+#workspace .employee-card select{color:#172033!important;background:#fff!important;border-color:#cbd5e1!important}
 #workspace .employee-card input::placeholder,
-#workspace .employee-card textarea::placeholder{color:#7b879a!important;opacity:1}
-#workspace .employee-card button{color:#fff!important;background:#4f46d5!important;border-color:#4f46d5!important}
-#workspace .employee-card button#endShift{color:#3730a3!important;background:#fff!important;border-color:#cfd3f8!important}
+#workspace .employee-card textarea::placeholder{color:#7b8794!important;opacity:1}
+#workspace .employee-card button{color:#fff!important;background:#4f46e5!important;border:1px solid #4f46e5!important}
+#workspace .employee-card button#endShift{color:#3730a3!important;background:#fff!important;border-color:#c7d2fe!important}
 #workspace .employee-card button.employee-see-all,
-#workspace .employee-card button.secondary-action{color:#4038b7!important;background:#f0efff!important;border-color:#dedbff!important}
-#workspace #employee-view-home .employee-card:first-child,
-#workspace #employee-view-home .employee-card:first-child *:not(button):not(svg):not(path){color:#fff!important}
-#workspace #employee-view-home .employee-card:first-child #gpsStatus{color:#e6fff6!important}
-#workspace #employee-view-home .employee-card:first-child button{color:#263b91!important;background:#fff!important;border-color:#fff!important}
-#workspace .employee-nav{grid-template-columns:repeat(6,minmax(0,1fr))}
-#workspace .employee-nav button{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;min-width:0!important;padding:6px 2px!important;color:#47536b!important}
-#workspace .employee-nav .employee-nav-icon{display:grid!important;place-items:center!important;width:22px!important;height:22px!important;flex:0 0 22px!important;font-size:0!important;line-height:1!important;color:currentColor!important}
-#workspace .employee-nav .employee-nav-icon svg{display:block;width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#workspace .employee-nav .employee-nav-label{display:block!important;max-width:100%;font-size:10px!important;line-height:1.15!important;font-weight:750!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;color:inherit!important}
-#workspace .employee-nav button[aria-current="page"]{color:#3730a3!important;background:#eef0ff!important}
-@media(max-width:360px){#workspace .employee-nav .employee-nav-label{font-size:9px!important}}
+#workspace .employee-card button.secondary-action{color:#4338ca!important;background:#eef2ff!important;border-color:#dbe3ff!important}
+
+/* Shift panel was bg-indigo-50 in the HTML: keep it light and use dark text. */
+#workspace #employee-view-home .employee-card:first-child{background:#eef2ff!important;border:1px solid #c7d2fe!important;color:#1e293b!important}
+#workspace #employee-view-home .employee-card:first-child *:not(button):not(svg):not(path){color:#26354d!important}
+#workspace #employee-view-home .employee-card:first-child #shiftStatus{color:#172554!important;font-weight:800!important}
+#workspace #employee-view-home .employee-card:first-child #gpsStatus{color:#475569!important}
+#workspace #employee-view-home .employee-card:first-child button#startShift{color:#fff!important;background:#4f46e5!important;border-color:#4f46e5!important}
+#workspace #employee-view-home .employee-card:first-child button#endShift{color:#3730a3!important;background:#fff!important;border-color:#c7d2fe!important}
+
+/* Consistent, larger, aligned outline icons and evenly sized navigation targets. */
+#workspace .employee-nav{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+#workspace .employee-nav button{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:5px!important;min-width:0!important;min-height:64px!important;padding:7px 2px!important;color:#475569!important;background:transparent!important;border:1px solid transparent!important;border-radius:12px!important}
+#workspace .employee-nav .employee-nav-icon{display:grid!important;place-items:center!important;width:26px!important;height:26px!important;flex:0 0 26px!important;font-size:0!important;line-height:1!important;color:currentColor!important}
+#workspace .employee-nav .employee-nav-icon svg{display:block!important;width:24px!important;height:24px!important;overflow:visible!important;stroke:currentColor!important;fill:none!important;stroke-width:2.1!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+#workspace .employee-nav .employee-nav-icon svg *{stroke:currentColor!important;fill:none!important}
+#workspace .employee-nav .employee-nav-label{display:block!important;max-width:100%!important;font-size:11px!important;line-height:1.15!important;font-weight:700!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;color:inherit!important}
+#workspace .employee-nav button[aria-current="page"]{color:#3730a3!important;background:#eef2ff!important;border-color:#dbe3ff!important}
+@media(max-width:360px){#workspace .employee-nav .employee-nav-label{font-size:10px!important}}
 </style>
 
 </head>
