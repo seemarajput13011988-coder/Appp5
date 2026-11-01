@@ -815,6 +815,19 @@ function setupEmployeeWorkspaceNavigation() {
     refreshPreview();
     if (sourceTasks) new MutationObserver(refreshPreview).observe(sourceTasks, {childList:true,subtree:true,characterData:true});
   }
+  const mobileNames = { home: 'Home', attendance: 'Time', tasks: 'Tasks', tickets: 'Ticket', requests: 'More', updates: 'Chat' };
+  const mobileQuery = window.matchMedia('(max-width: 760px)');
+  const syncNavigationLabels = () => {
+    for (const button of nav.querySelectorAll('button')) {
+      const group = groups.find(item => 'employee-view-' + item.id === button.getAttribute('aria-controls'));
+      if (!group) continue;
+      button.dataset.fullLabel = group.label;
+      button.setAttribute('aria-label', group.label);
+      button.textContent = mobileQuery.matches ? mobileNames[group.id] : group.label;
+    }
+  };
+  syncNavigationLabels();
+  mobileQuery.addEventListener?.('change', syncNavigationLabels);
   welcome.classList.add('employee-welcome');
   welcome.after(nav);
   nav.after(views);
