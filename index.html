@@ -297,6 +297,77 @@ body>main>header{display:none!important}
 </style>
 
 <style id="kb-mobile-fixed-nav-overflow-fix">@media(max-width:760px){body>main{overflow:visible!important}#workspace .employee-nav{left:0;right:0;transform:none}}</style>
+<style id="kb-mobile-contrast-navigation-v6">
+/* Consistent readable text on light employee surfaces */
+#workspace{color:#1c2943!important}
+#workspace .employee-card{color:#26354d!important}
+#workspace .employee-card h3,
+#workspace .employee-card h4,
+#workspace .employee-card p,
+#workspace .employee-card label,
+#workspace .employee-card small,
+#workspace .employee-card strong,
+#workspace .employee-card span,
+#workspace .employee-card li,
+#workspace .employee-card td,
+#workspace .employee-card th,
+#workspace .employee-card .muted,
+#workspace .employee-card .text-slate-400,
+#workspace .employee-card .text-slate-500,
+#workspace .employee-card .text-gray-400,
+#workspace .employee-card .text-gray-500{color:#35445d!important}
+#workspace .employee-card input,
+#workspace .employee-card select,
+#workspace .employee-card textarea{color:#18243b!important;background:#fff!important}
+#workspace .employee-card input::placeholder,
+#workspace .employee-card textarea::placeholder{color:#8995a8!important;opacity:1}
+#workspace .employee-card button{color:#273751}
+#workspace #employee-view-home .employee-card:first-child,
+#workspace #employee-view-home .employee-card:first-child h3,
+#workspace #employee-view-home .employee-card:first-child h4,
+#workspace #employee-view-home .employee-card:first-child p,
+#workspace #employee-view-home .employee-card:first-child label,
+#workspace #employee-view-home .employee-card:first-child small,
+#workspace #employee-view-home .employee-card:first-child strong,
+#workspace #employee-view-home .employee-card:first-child span,
+#workspace #employee-view-home .employee-card:first-child #shiftStatus{color:#fff!important}
+#workspace #employee-view-home .employee-card:first-child #gpsStatus{color:#e6fff6!important}
+#workspace #employee-view-home .employee-card:first-child button{color:#fff}
+#workspace #employee-view-home .employee-card:first-child #startShift{color:#233b9a}
+#workspace .employee-nav button{color:#43516a!important}
+#workspace .employee-nav button[aria-current=page]{color:#3730a3!important}
+#workspace .employee-task-summary{color:#34435e!important}
+#workspace .employee-see-all{color:#4438bd!important}
+@media(max-width:760px){
+ #workspace{padding:10px 0 calc(94px + env(safe-area-inset-bottom))!important}
+ #workspace .employee-nav{
+   position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;
+   z-index:1000!important;width:100%!important;max-width:none!important;box-sizing:border-box!important;
+   display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:2px!important;
+   padding:7px 5px calc(7px + env(safe-area-inset-bottom))!important;margin:0!important;
+   border:0!important;border-top:1px solid #dfe5ef!important;border-radius:16px 16px 0 0!important;
+   overflow:hidden!important;white-space:normal!important;background:rgba(255,255,255,.97)!important;
+   box-shadow:0 -7px 24px rgba(18,35,65,.12)!important;backdrop-filter:blur(18px)
+ }
+ #workspace .employee-nav button{
+   display:flex!important;align-items:center!important;justify-content:center!important;
+   min-width:0!important;max-width:none!important;width:100%!important;min-height:48px!important;
+   margin:0!important;padding:7px 1px!important;border:0!important;border-radius:10px!important;
+   font-size:10px!important;line-height:1.15!important;font-weight:800!important;
+   text-align:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+   color:#4b5870!important;background:transparent!important
+ }
+ #workspace .employee-nav button[aria-current=page]{background:#eef0ff!important;color:#3730a3!important}
+ #workspace .employee-quick-actions{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important}
+ #workspace .employee-quick-action{min-width:0!important;min-height:94px!important;padding:9px 3px!important;font-size:10px!important;overflow-wrap:anywhere}
+ #workspace .employee-quick-icon{width:39px!important;height:39px!important;font-size:21px!important}
+}
+@media(max-width:350px){
+ #workspace .employee-nav{grid-template-columns:repeat(6,minmax(0,1fr))!important;padding-left:2px!important;padding-right:2px!important}
+ #workspace .employee-nav button{font-size:9px!important;letter-spacing:-.2px}
+ #workspace .employee-quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+</style>
 </head>
 <body class="bg-slate-50 text-slate-900">
 
