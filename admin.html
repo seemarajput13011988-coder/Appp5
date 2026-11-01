@@ -288,6 +288,58 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 }
 </style>
 
+<style id="kb-mobile-contrast-navigation-v6">
+/* Admin content always uses dark readable type on light cards */
+#dashboard main{color:#1d2b43}
+#dashboard .page>div,#dashboard .page form{color:#26354d}
+#dashboard .page h2,#dashboard .page h3,#dashboard .page strong,#dashboard .page label,
+#dashboard .page p,#dashboard .page span,#dashboard .page small,#dashboard .page td,
+#dashboard .page th,#dashboard .page li{color:inherit}
+#dashboard .page input,#dashboard .page select,#dashboard .page textarea{color:#18243b!important;background:#fff!important}
+#dashboard .page input::placeholder,#dashboard .page textarea::placeholder{color:#8995a8!important;opacity:1}
+#dashboard .page button{color:#253650}
+#dashboard aside,#dashboard aside *{color:#e6edfb}
+#dashboard aside h2{color:#fff}
+#dashboard .nav-group-label{color:#a9bad6!important}
+#dashboard aside nav button[aria-current=page]{color:#fff!important}
+@media(max-width:799px){
+ #dashboard{display:flex!important;flex-direction:column!important;min-width:0}
+ #dashboard aside{
+   position:sticky!important;top:0!important;z-index:100!important;
+   width:100%!important;min-width:0!important;height:auto!important;max-height:none!important;
+   padding:12px 12px 10px!important;border-radius:0 0 16px 16px!important;
+   overflow:visible!important;box-shadow:0 8px 24px rgba(9,24,52,.18)!important
+ }
+ #dashboard aside>.text-indigo-300{font-size:9px!important;padding:5px 8px!important}
+ #dashboard aside h2{font-size:18px!important;margin:5px 0!important}
+ #dashboard aside nav{
+   display:flex!important;flex-direction:row!important;align-items:center!important;
+   gap:6px!important;margin:9px 0 0!important;padding:2px 0 5px!important;
+   width:100%!important;overflow-x:auto!important;overflow-y:hidden!important;
+   overscroll-behavior-x:contain!important;scrollbar-width:none!important
+ }
+ #dashboard aside nav::-webkit-scrollbar{display:none}
+ #dashboard .nav-group-label{display:none!important}
+ #dashboard aside nav button{
+   display:inline-flex!important;align-items:center!important;justify-content:center!important;
+   flex:0 0 auto!important;width:auto!important;min-width:max-content!important;
+   min-height:38px!important;padding:8px 12px!important;border-radius:10px!important;
+   white-space:nowrap!important;font-size:12px!important
+ }
+ #dashboard #signOut{display:inline-flex!important;width:auto!important;min-height:34px!important;margin:7px 0 0!important;padding:6px 12px!important}
+ #dashboard main{width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important;padding:18px 13px 30px!important}
+ #dashboard main>div:first-child{gap:10px!important;padding-bottom:13px!important}
+ #dashboard main>div:first-child h1{font-size:26px!important}
+ #dashboard #adminEmail{font-size:11px!important;padding:7px 10px!important;overflow-wrap:anywhere}
+ #dashboard .page{min-width:0!important}
+ #dashboard .page>div,#dashboard .page form{min-width:0!important;max-width:100%!important;box-sizing:border-box!important;overflow-wrap:anywhere}
+}
+@media(max-width:380px){
+ #dashboard aside{padding-left:9px!important;padding-right:9px!important}
+ #dashboard aside nav button{padding:7px 10px!important;font-size:11px!important}
+ #dashboard main{padding-left:10px!important;padding-right:10px!important}
+}
+</style>
 </head>
 <body class="bg-slate-100 text-slate-900">
 
