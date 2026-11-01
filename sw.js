@@ -1,4 +1,4 @@
-const CACHE = 'kb-enterprise-shell-v3';
+const CACHE = 'kb-enterprise-shell-v4';
 const SHELL = ['./', './app.html', './index.html', './admin.html', './employee.js', './employee-requests.js', './admin.js', './enterprise-admin.js', './firebase.js', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', event => {
