@@ -695,12 +695,12 @@ function setupEmployeeWorkspaceNavigation() {
 
   const cardFor = id => directChildContaining(id);
   const groups = [
-    { id: 'home', label: 'Overview', icon: '⌂', ids: ['shiftStatus'], title: 'Your shift' },
-    { id: 'attendance', label: 'Attendance', icon: '◷', ids: ['workerHistoryList'], title: 'My attendance' },
-    { id: 'tasks', label: 'My tasks', icon: '☷', ids: ['tasks'], title: 'Assigned work' },
-    { id: 'tickets', label: 'Tickets', icon: '◇', ids: ['ticketForm'], title: 'Customer service' },
-    { id: 'requests', label: 'Requests', icon: '▣', ids: ['employeeRequestForm'], title: 'My requests' },
-    { id: 'updates', label: 'Updates', icon: '✉', ids: ['announcements', 'employeeMessageForm'], title: 'Team updates' }
+    { id: 'home', label: 'Overview', icon: 'home', ids: ['shiftStatus'], title: 'Your shift' },
+    { id: 'attendance', label: 'Attendance', icon: 'clock', ids: ['workerHistoryList'], title: 'My attendance' },
+    { id: 'tasks', label: 'My tasks', icon: 'tasks', ids: ['tasks'], title: 'Assigned work' },
+    { id: 'tickets', label: 'Tickets', icon: 'ticket', ids: ['ticketForm'], title: 'Customer service' },
+    { id: 'requests', label: 'Requests', icon: 'calendar', ids: ['employeeRequestForm'], title: 'My requests' },
+    { id: 'updates', label: 'Updates', icon: 'message', ids: ['announcements', 'employeeMessageForm'], title: 'Team updates' }
   ];
   const nav = document.createElement('nav');
   nav.className = 'employee-nav';
@@ -715,7 +715,15 @@ function setupEmployeeWorkspaceNavigation() {
     const icon = document.createElement('span');
     icon.className = 'employee-nav-icon';
     icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = group.icon;
+    const iconPaths = {
+      home: '<path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9"/><path d="M9 20v-6h6v6"/>',
+      clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+      tasks: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+      ticket: '<path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4V6Z"/><path d="M13 8v2m0 4v2"/>',
+      calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+      message: '<path d="M21 11.5a8.5 8.5 0 0 1-12.8 7.3L3 20l1.2-4.3A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 11h8M8 14h5"/>'
+    };
+    icon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + iconPaths[group.icon] + '</svg>';
     const label = document.createElement('span');
     label.className = 'employee-nav-label';
     label.textContent = group.label;
