@@ -715,15 +715,16 @@ function setupEmployeeWorkspaceNavigation() {
     const icon = document.createElement('span');
     icon.className = 'employee-nav-icon';
     icon.setAttribute('aria-hidden', 'true');
+    // Filled, rounded icon set for a cleaner modern mobile-app navigation.
     const iconPaths = {
-      home: '<path d="m3 10 9-7 9 7"/><path d="M5 9v11h14V9"/><path d="M9 20v-6h6v6"/>',
-      clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
-      tasks: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
-      ticket: '<path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4V6Z"/><path d="M13 8v2m0 4v2"/>',
-      calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
-      message: '<path d="M21 11.5a8.5 8.5 0 0 1-12.8 7.3L3 20l1.2-4.3A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8 11h8M8 14h5"/>'
+      home: '<path d="M12 2.8 1.8 10.9l1.5 1.9L5 11.6V21h5.2v-6.2h3.6V21H19v-9.4l1.7 1.2 1.5-1.9L12 2.8Z"/>',
+      clock: '<path fill-rule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1.1 4.5v5l3.5 2.1-1.1 1.8-4.6-2.8V6.5h2.2Z"/>',
+      tasks: '<path fill-rule="evenodd" d="M7 2h10a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V5a3 3 0 0 1 3-3Zm1.2 5.1a1 1 0 0 0 0 2h7.6a1 1 0 1 0 0-2H8.2Zm0 4.9a1 1 0 0 0 0 2h7.6a1 1 0 1 0 0-2H8.2Zm0 4.9a1 1 0 0 0 0 2h4.8a1 1 0 1 0 0-2H8.2Z"/>',
+      ticket: '<path d="M4 4h16a1.5 1.5 0 0 1 1.5 1.5v3a3.5 3.5 0 0 0 0 7v3A1.5 1.5 0 0 1 20 20H4a1.5 1.5 0 0 1-1.5-1.5v-3a3.5 3.5 0 0 0 0-7v-3A1.5 1.5 0 0 1 4 4Zm8 3a1 1 0 0 0-1 1v1a1 1 0 1 0 2 0V8a1 1 0 0 0-1-1Zm0 5a1 1 0 0 0-1 1v3a1 1 0 1 0 2 0v-3a1 1 0 0 0-1-1Z"/>',
+      calendar: '<path fill-rule="evenodd" d="M7 2a1.2 1.2 0 0 1 1.2 1.2V5h7.6V3.2a1.2 1.2 0 1 1 2.4 0V5H19a3 3 0 0 1 3 3v11a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3h1.8V3.2A1.2 1.2 0 0 1 7 2Zm12 8H5v9h14v-9Z"/>',
+      message: '<path d="M12 3C6.5 3 2 6.9 2 11.7c0 2.2 1 4.2 2.7 5.7L4 21l4.1-2.1c1.2.4 2.5.6 3.9.6 5.5 0 10-3.9 10-8.7S17.5 3 12 3Zm-4 7.6h8a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2Z"/>'
     };
-    icon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + iconPaths[group.icon] + '</svg>';
+    icon.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + iconPaths[group.icon] + '</svg>';
     const label = document.createElement('span');
     label.className = 'employee-nav-label';
     label.textContent = group.label;
