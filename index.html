@@ -484,7 +484,11 @@ body>main>header{display:none!important}
         <p class="text-slate-500 text-sm">Signed in as</p>
         <h2 id="userName" class="font-bold text-lg"></h2>
       </div>
-      <button id="signOut" class="text-indigo-600 text-sm font-semibold">Sign out</button>
+      <div class="flex flex-col items-end gap-1">
+        <button id="signOut" class="text-indigo-600 text-sm font-semibold">Sign out</button>
+        <button id="enableEmployeeNotifications" type="button" class="rounded-lg border px-3 py-2 text-xs font-semibold">Enable notifications</button>
+        <p id="employeeNotificationStatus" class="muted text-xs" role="status"></p>
+      </div>
     </div>
 
     <div class="rounded-2xl border p-5 bg-indigo-50">
@@ -498,6 +502,15 @@ body>main>header{display:none!important}
         <button id="endShift" class="flex-1 border border-indigo-200 bg-white text-indigo-700 rounded-xl p-3 font-semibold">End shift</button>
       </div>
       <p id="gpsStatus" role="status" aria-live="polite" class="mt-3">GPS is not requested yet.</p>
+    </div>
+
+    <div class="rounded-2xl border p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h3 class="font-bold">Work calendar</h3>
+        <label class="text-sm">Month<input id="workerCalendarMonth" type="month" class="border rounded-lg p-2 ml-2"></label>
+      </div>
+      <div id="workerCalendarGrid" class="grid grid-cols-7 gap-2 mt-4"></div>
+      <div id="workerCalendarDayEvents" class="mt-4 space-y-3"></div>
     </div>
 
     <div class="rounded-2xl border p-5">

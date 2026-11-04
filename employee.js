@@ -234,6 +234,113 @@ let offAnnouncements = () => {};
 let offMessages = () => {};
 let offApproval = () => {};
 let offCorrections = () => {};
+let offCalendarAssigned = () => {};
+let offCalendarAll = () => {};
+let employeeCalendarAssignedEvents = {};
+let employeeCalendarAllEvents = {};
+let employeeCalendarSelectedDate = '';
+let employeeTaskNotificationReady = false;
+let employeeAnnouncementNotificationReady = false;
+let employeeMessageNotificationReady = false;
+let employeeCalendarNotificationReady = { assigned: false, all: false };
+let knownEmployeeTaskIds = new Set();
+let knownEmployeeAnnouncementIds = new Set();
+let knownEmployeeMessageIds = new Set();
+let employeeNotificationPluginPromise = null;
+
+function appNotificationId(value) {
+  let hash = 0;
+  for (const char of String(value)) hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  return (Math.abs(hash) % 2147483000) + 1;
+}
+
+async function getEmployeeNotificationPlugin() {
+  if (!window.Capacitor?.isNativePlatform?.()) return null;
+  if (!employeeNotificationPluginPromise) {
+    employeeNotificationPluginPromise = import('https://esm.sh/@capacitor/local-notifications@7.0.3')
+      .then(module => module.LocalNotifications);
+  }
+  return employeeNotificationPluginPromise;
+}
+
+async function requestEmployeeNotificationPermission() {
+  const status = $('employeeNotificationStatus');
+  try {
+    if (window.Capacitor?.isNativePlatform?.()) {
+      const plugin = await getEmployeeNotificationPlugin();
+      const permission = await plugin.requestPermissions();
+      if (permission?.display === 'granted') {
+        if (status) status.textContent = 'Notifications enabled on this device.';
+        scheduleEmployeeCalendarReminders();
+        return true;
+      }
+      if (status) status.textContent = 'Notifications are not enabled. You can allow them in Android settings.';
+      return false;
+    }
+    if (typeof Notification === 'undefined') {
+      if (status) status.textContent = 'This browser does not support notifications.';
+      return false;
+    }
+    const permission = await Notification.requestPermission();
+    if (status) status.textContent = permission === 'granted' ? 'Browser notifications enabled.' : 'Browser notifications were not enabled.';
+    return permission === 'granted';
+  } catch {
+    if (status) status.textContent = 'Could not enable notifications. Check device settings.';
+    return false;
+  }
+}
+
+async function showEmployeeNotification(title, body, key) {
+  try {
+    if (window.Capacitor?.isNativePlatform?.()) {
+      const plugin = await getEmployeeNotificationPlugin();
+      const permission = await plugin.checkPermissions();
+      if (permission?.display !== 'granted') return;
+      await plugin.schedule({
+        notifications: [{
+          id: appNotificationId(key),
+          title: String(title).slice(0, 80),
+          body: String(body || '').slice(0, 220),
+          schedule: { at: new Date(Date.now() + 1000) }
+        }]
+      });
+      return;
+    }
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      new Notification(String(title).slice(0, 80), { body: String(body || '').slice(0, 220), tag: String(key) });
+    }
+  } catch {}
+}
+
+async function scheduleEmployeeCalendarReminders() {
+  if (!window.Capacitor?.isNativePlatform?.()) return;
+  try {
+    const plugin = await getEmployeeNotificationPlugin();
+    const permission = await plugin.checkPermissions();
+    if (permission?.display !== 'granted') return;
+    const events = Object.entries({ ...employeeCalendarAllEvents, ...employeeCalendarAssignedEvents })
+      .map(([id, event]) => ({ ...event, id }));
+    for (const event of events) {
+      const id = appNotificationId('calendar:' + event.id);
+      try { await plugin.cancel({ notifications: [{ id }] }); } catch {}
+      if (event.status === 'cancelled' || !event.reminderMinutes || !event.date || !event.time) continue;
+      const eventTime = new Date(event.date + 'T' + event.time + ':00+05:30');
+      const reminderAt = new Date(eventTime.getTime() - Number(event.reminderMinutes) * 60000);
+      if (!Number.isFinite(reminderAt.getTime()) || reminderAt.getTime() <= Date.now() + 1000) continue;
+      await plugin.schedule({
+        notifications: [{
+          id,
+          title: 'Upcoming work event',
+          body: String(event.title || 'Work event') + ' · ' + event.time,
+          schedule: { at: reminderAt }
+        }]
+      });
+    }
+  } catch {}
+}
+
+$('enableEmployeeNotifications')?.addEventListener('click', requestEmployeeNotificationPermission);
+
 $('approvalSignOut').onclick = () => signOut(auth);
 
 let userId = null;
@@ -400,6 +507,17 @@ onAuthStateChanged(auth, async user => {
   offMessages();
   offApproval();
   offCorrections();
+  offCalendarAssigned();
+  offCalendarAll();
+  employeeCalendarAssignedEvents = {};
+  employeeCalendarAllEvents = {};
+  employeeTaskNotificationReady = false;
+  employeeAnnouncementNotificationReady = false;
+  employeeMessageNotificationReady = false;
+  employeeCalendarNotificationReady = { assigned: false, all: false };
+  knownEmployeeTaskIds = new Set();
+  knownEmployeeAnnouncementIds = new Set();
+  knownEmployeeMessageIds = new Set();
   workerCorrections = {};
   userId = null;
   $('approvalStatus').classList.add('hidden');
@@ -477,6 +595,38 @@ onAuthStateChanged(auth, async user => {
     }
 
     userId = user.uid;
+    $('workerCalendarMonth').value = workDate(Date.now()).slice(0, 7);
+    employeeCalendarSelectedDate = workDate(Date.now());
+    renderEmployeeCalendar();
+
+    const assignedCalendarQuery = query(ref(db, 'calendarEvents'), orderByChild('assignedTo'), equalTo(userId));
+    const allCalendarQuery = query(ref(db, 'calendarEvents'), orderByChild('assignedTo'), equalTo('all'));
+    offCalendarAssigned = onValue(assignedCalendarQuery, snap => {
+      const incoming = snap.val() || {};
+      const priorIds = new Set(Object.keys({ ...employeeCalendarAllEvents, ...employeeCalendarAssignedEvents }));
+      if (employeeCalendarNotificationReady.assigned && employeeCalendarNotificationReady.all) {
+        for (const [id, item] of Object.entries(incoming)) {
+          if (!priorIds.has(id)) showEmployeeNotification('New calendar event', item.title || 'A work event was added to your calendar.', 'calendar-event:' + id);
+        }
+      }
+      employeeCalendarAssignedEvents = incoming;
+      employeeCalendarNotificationReady.assigned = true;
+      renderEmployeeCalendar();
+      scheduleEmployeeCalendarReminders();
+    }, error => showDbError(error));
+    offCalendarAll = onValue(allCalendarQuery, snap => {
+      const incoming = snap.val() || {};
+      const priorIds = new Set(Object.keys({ ...employeeCalendarAllEvents, ...employeeCalendarAssignedEvents }));
+      if (employeeCalendarNotificationReady.assigned && employeeCalendarNotificationReady.all) {
+        for (const [id, item] of Object.entries(incoming)) {
+          if (!priorIds.has(id)) showEmployeeNotification('New team calendar event', item.title || 'A work event was added for everyone.', 'calendar-event:' + id);
+        }
+      }
+      employeeCalendarAllEvents = incoming;
+      employeeCalendarNotificationReady.all = true;
+      renderEmployeeCalendar();
+      scheduleEmployeeCalendarReminders();
+    }, error => showDbError(error));
     const approvalRef = ref(db, `accessRequests/${user.uid}`);
     offApproval = onValue(approvalRef, snap => {
       const request = snap.val();
@@ -550,8 +700,17 @@ onAuthStateChanged(auth, async user => {
       ref(db, 'tasks'), orderByChild('assigneeUid'), equalTo(userId)
     );
     offTasks = onValue(assignedTasks, snap => {
-      employeeTasks = Object.entries(snap.val() || {})
+      const nextTasks = Object.entries(snap.val() || {})
         .filter(([, task]) => task.assigneeUid === userId);
+      const nextIds = new Set(nextTasks.map(([id]) => id));
+      if (employeeTaskNotificationReady) {
+        for (const [id, task] of nextTasks) {
+          if (!knownEmployeeTaskIds.has(id)) showEmployeeNotification('New task assigned', task.title || 'A new work task was assigned to you.', 'task:' + id);
+        }
+      }
+      knownEmployeeTaskIds = nextIds;
+      employeeTaskNotificationReady = true;
+      employeeTasks = nextTasks;
       cacheValue(`tasks:${userId}`, employeeTasks.map(([id, task]) => [id, { title: task.title || '', status: task.status || 'Assigned', priority: task.priority || '', dueAt: task.dueAt || null }])).catch(() => {});
 
       renderEmployeeTasks();
@@ -563,8 +722,30 @@ onAuthStateChanged(auth, async user => {
 
     const assignedTickets = query(ref(db, 'tickets'), orderByChild('assignedTo'), equalTo(userId));
     offTickets = onValue(assignedTickets, snap => renderTickets(snap.val() || {}), err => showDbError(err));
-    offAnnouncements = onValue(ref(db, 'announcements'), snap => renderAnnouncements(snap.val() || {}), err => showDbError(err));
-    offMessages = onValue(ref(db, `messages/${userId}`), snap => renderMessages(snap.val() || {}), err => showDbError(err));
+    offAnnouncements = onValue(ref(db, 'announcements'), snap => {
+      const data = snap.val() || {};
+      const ids = new Set(Object.keys(data));
+      if (employeeAnnouncementNotificationReady) {
+        for (const [id, item] of Object.entries(data)) {
+          if (!knownEmployeeAnnouncementIds.has(id)) showEmployeeNotification('New announcement', item.title || item.body || 'A new company announcement was published.', 'announcement:' + id);
+        }
+      }
+      knownEmployeeAnnouncementIds = ids;
+      employeeAnnouncementNotificationReady = true;
+      renderAnnouncements(data);
+    }, err => showDbError(err));
+    offMessages = onValue(ref(db, `messages/${userId}`), snap => {
+      const data = snap.val() || {};
+      const ids = new Set(Object.keys(data));
+      if (employeeMessageNotificationReady) {
+        for (const [id, item] of Object.entries(data)) {
+          if (!knownEmployeeMessageIds.has(id) && item.senderRole === 'admin') showEmployeeNotification('New message from administrator', item.text || 'You received a new message.', 'message:' + id);
+        }
+      }
+      knownEmployeeMessageIds = ids;
+      employeeMessageNotificationReady = true;
+      renderMessages(data);
+    }, err => showDbError(err));
     updateConnectionStatus();
     flushOutbox();
 
@@ -681,6 +862,93 @@ $('ticketForm').onsubmit = async event => {
     $('ticketForm').reset(); $('taskFeedback').textContent = 'Ticket created.';
   } catch { $('actionError').textContent = 'Could not create ticket. Check database access.'; }
 };
+
+function renderEmployeeCalendar() {
+  const grid = $('workerCalendarGrid');
+  const eventBox = $('workerCalendarDayEvents');
+  const monthInput = $('workerCalendarMonth');
+  if (!grid || !eventBox || !monthInput) return;
+  if (!monthInput.value) monthInput.value = workDate(Date.now()).slice(0, 7);
+  const [year, month] = monthInput.value.split('-').map(Number);
+  if (!year || !month) return;
+  if (!employeeCalendarSelectedDate || !employeeCalendarSelectedDate.startsWith(monthInput.value)) {
+    employeeCalendarSelectedDate = monthInput.value + '-01';
+  }
+
+  const events = Object.entries({ ...employeeCalendarAllEvents, ...employeeCalendarAssignedEvents })
+    .map(([id, event]) => ({ ...event, id }))
+    .filter(event => event.status !== 'cancelled')
+    .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const firstWeekday = new Date(year, month - 1, 1).getDay();
+  grid.replaceChildren();
+  for (const dayName of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']) {
+    const label = document.createElement('div');
+    label.className = 'text-center text-xs font-semibold text-slate-500 py-1';
+    label.textContent = dayName;
+    grid.append(label);
+  }
+  for (let i = 0; i < firstWeekday; i++) {
+    const blank = document.createElement('div');
+    blank.setAttribute('aria-hidden', 'true');
+    grid.append(blank);
+  }
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = monthInput.value + '-' + String(day).padStart(2, '0');
+    const count = events.filter(event => event.date === date).length;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'min-h-16 rounded-xl border p-2 text-left text-sm ' +
+      (employeeCalendarSelectedDate === date ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white');
+    const number = document.createElement('span');
+    number.className = 'block font-semibold';
+    number.textContent = String(day);
+    button.append(number);
+    if (count) {
+      const countLabel = document.createElement('span');
+      countLabel.className = 'block text-xs text-indigo-700 mt-1';
+      countLabel.textContent = count + (count === 1 ? ' event' : ' events');
+      button.append(countLabel);
+    }
+    button.onclick = () => { employeeCalendarSelectedDate = date; renderEmployeeCalendar(); };
+    grid.append(button);
+  }
+
+  eventBox.replaceChildren();
+  const dayEvents = events.filter(event => event.date === employeeCalendarSelectedDate);
+  const heading = document.createElement('h4');
+  heading.className = 'font-bold';
+  heading.textContent = 'Your events · ' + employeeCalendarSelectedDate;
+  eventBox.append(heading);
+  if (!dayEvents.length) {
+    const empty = document.createElement('p');
+    empty.className = 'muted text-sm';
+    empty.textContent = 'No work events scheduled for this date.';
+    eventBox.append(empty);
+    return;
+  }
+  for (const event of dayEvents) {
+    const card = document.createElement('article');
+    card.className = 'border rounded-xl p-3';
+    const title = document.createElement('strong');
+    title.textContent = event.title || 'Work event';
+    const meta = document.createElement('p');
+    meta.className = 'muted text-sm mt-1';
+    meta.textContent = (event.time || 'Time not set') + ' · ' +
+      (event.assignedTo === 'all' ? 'For all employees' : 'Assigned to you') +
+      (event.reminderMinutes ? ' · Reminder ' + event.reminderMinutes + ' min before' : '');
+    const description = document.createElement('p');
+    description.className = 'text-sm mt-2';
+    description.textContent = event.description || '';
+    card.append(title, meta, description);
+    eventBox.append(card);
+  }
+}
+
+$('workerCalendarMonth')?.addEventListener('change', () => {
+  employeeCalendarSelectedDate = $('workerCalendarMonth').value + '-01';
+  renderEmployeeCalendar();
+});
 
 function renderAnnouncements(data) {
   const box = $('announcements'); box.replaceChildren();
