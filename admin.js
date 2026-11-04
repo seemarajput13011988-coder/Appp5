@@ -21,6 +21,7 @@ let ticketCache = {};
 let announcementCache = {};
 let auditCache = {};
 let shiftCache = {};
+let gpsLocationCache = {};
 let correctionCache = {};
 let offSelectedMessages = () => {};
 $('signIn').onclick = async () => {
@@ -258,6 +259,11 @@ async function loadDashboardData(user) {
     unsub.push(onValue(ref(db, 'announcements'), snap => { announcementCache = snap.val() || {}; renderAnnouncementList(); }, databaseError));
     unsub.push(onValue(ref(db, 'auditLogs'), snap => { auditCache = snap.val() || {}; renderAudit(); }, databaseError));
 
+    unsub.push(onValue(ref(db, 'gpsLocations'), snap => {
+      gpsLocationCache = snap.val() || {};
+      renderGpsLocations();
+    }, error => databaseError(error, 'GPS locations')));
+
     unsub.push(onValue(ref(db, 'shifts'), snap => {
       shiftCache = snap.val() || {};
       let active = 0;
@@ -399,8 +405,32 @@ function renderGpsLocations() {
   if (!box) return;
   box.replaceChildren();
   const locations = [];
-  for (const [uid, records] of Object.entries(shiftCache)) {
+  const routeShiftKeys = new Set();
+
+  for (const [uid, shifts] of Object.entries(gpsLocationCache || {})) {
+    for (const [shiftId, pointMap] of Object.entries(shifts || {})) {
+      const route = Object.entries(pointMap || {})
+        .map(([id, point]) => ({ ...point, id }))
+        .filter(point => Number.isFinite(point.latitude) && Number.isFinite(point.longitude) && Number.isFinite(point.capturedAt))
+        .sort((a, b) => a.capturedAt - b.capturedAt);
+      if (!route.length) continue;
+      routeShiftKeys.add(uid + '/' + shiftId);
+      const latest = route[route.length - 1];
+      const shift = shiftCache[uid]?.[shiftId];
+      locations.push({
+        uid, shiftId, kind: shift?.status === 'active' ? 'Active shift route' : 'Shift route',
+        location: latest, route,
+        name: employees[uid]?.name || uid,
+        team: employees[uid]?.team || 'Unassigned',
+        timestamp: latest.capturedAt
+      });
+    }
+  }
+
+  // Keep displaying older shifts that only have a start/end GPS point.
+  for (const [uid, records] of Object.entries(shiftCache || {})) {
     for (const [shiftId, shift] of Object.entries(records || {})) {
+      if (routeShiftKeys.has(uid + '/' + shiftId)) continue;
       for (const [kind, location] of [['Shift start', shift.location], ['Shift end', shift.endLocation]]) {
         if (!location || !Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) continue;
         locations.push({
@@ -412,10 +442,13 @@ function renderGpsLocations() {
       }
     }
   }
-  locations.sort((a,b) => (b.location.capturedAt || b.timestamp || 0) - (a.location.capturedAt || a.timestamp || 0));
+
+  locations.sort((a, b) => (b.location.capturedAt || b.timestamp || 0) - (a.location.capturedAt || a.timestamp || 0));
+  const routeCount = locations.filter(item => item.route).reduce((sum, item) => sum + item.route.length, 0);
   $('gpsMapSummary').textContent = locations.length
-    ? locations.length + ' recorded GPS point' + (locations.length === 1 ? '' : 's') + ' · newest first'
-    : 'No GPS points recorded yet. Workers must allow location access during a shift action.';
+    ? locations.length + ' employee route/location record' + (locations.length === 1 ? '' : 's') + ' · ' + routeCount + ' route updates · newest first'
+    : 'No GPS points recorded yet. Employees must approve location access when starting a shift.';
+
   if (!locations.length) {
     const empty = document.createElement('p');
     empty.className = 'muted mt-3';
@@ -423,6 +456,7 @@ function renderGpsLocations() {
     box.append(empty);
     return;
   }
+
   for (const item of locations) {
     const lat = item.location.latitude, lon = item.location.longitude;
     const card = document.createElement('article');
@@ -435,11 +469,12 @@ function renderGpsLocations() {
     team.textContent = 'Team: ' + item.team;
     const pill = document.createElement('span');
     pill.className = 'gps-pill';
-    pill.textContent = item.location.accuracy ? 'Accuracy ±' + Math.round(item.location.accuracy) + ' m' : 'Accuracy not reported';
+    pill.textContent = item.route
+      ? item.route.length + ' GPS updates · accuracy ±' + Math.round(item.location.accuracy || 0) + ' m'
+      : item.location.accuracy ? 'Accuracy ±' + Math.round(item.location.accuracy) + ' m' : 'Accuracy not reported';
     const time = document.createElement('p');
     time.className = 'muted text-sm mt-2';
-    const timestamp = item.location.capturedAt || item.timestamp;
-    time.textContent = 'Recorded: ' + (timestamp ? new Date(timestamp).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}) : 'time unavailable');
+    time.textContent = 'Latest update: ' + (item.timestamp ? new Date(item.timestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : 'time unavailable');
     const coordinates = document.createElement('p');
     coordinates.className = 'text-sm mt-2';
     coordinates.textContent = lat.toFixed(6) + ', ' + lon.toFixed(6);
@@ -447,17 +482,33 @@ function renderGpsLocations() {
     link.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(lat + ',' + lon);
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
-    link.textContent = 'Open in Google Maps';
+    link.textContent = 'Open latest location in Google Maps';
     const map = document.createElement('iframe');
     map.src = 'https://maps.google.com/maps?q=' + encodeURIComponent(lat + ',' + lon) + '&z=16&output=embed';
     map.loading = 'lazy';
-    map.title = 'Recorded location for ' + item.name;
+    map.title = 'Latest recorded location for ' + item.name;
     map.referrerPolicy = 'no-referrer';
-    card.append(title,team,pill,time,coordinates,link,map);
+    card.append(title, team, pill, time, coordinates, link, map);
+
+    if (item.route?.length) {
+      const details = document.createElement('details');
+      details.className = 'mt-3';
+      const summary = document.createElement('summary');
+      summary.textContent = 'View recent route points (' + item.route.length + ')';
+      details.append(summary);
+      for (const point of item.route.slice(-12).reverse()) {
+        const row = document.createElement('p');
+        row.className = 'muted text-xs mt-2';
+        row.textContent = new Date(point.capturedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) +
+          ' · ' + point.latitude.toFixed(5) + ', ' + point.longitude.toFixed(5) +
+          ' · ±' + Math.round(point.accuracy || 0) + ' m';
+        details.append(row);
+      }
+      card.append(details);
+    }
     box.append(card);
   }
 }
-
 
 function indiaDate(timestamp) {
   if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) return '';
