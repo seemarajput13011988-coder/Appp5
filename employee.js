@@ -511,6 +511,13 @@ onAuthStateChanged(auth, async user => {
   offCalendarAll();
   employeeCalendarAssignedEvents = {};
   employeeCalendarAllEvents = {};
+  employeeTaskNotificationReady = false;
+  employeeAnnouncementNotificationReady = false;
+  employeeMessageNotificationReady = false;
+  employeeCalendarNotificationReady = { assigned: false, all: false };
+  knownEmployeeTaskIds = new Set();
+  knownEmployeeAnnouncementIds = new Set();
+  knownEmployeeMessageIds = new Set();
   workerCorrections = {};
   userId = null;
   $('approvalStatus').classList.add('hidden');
@@ -595,12 +602,30 @@ onAuthStateChanged(auth, async user => {
     const assignedCalendarQuery = query(ref(db, 'calendarEvents'), orderByChild('assignedTo'), equalTo(userId));
     const allCalendarQuery = query(ref(db, 'calendarEvents'), orderByChild('assignedTo'), equalTo('all'));
     offCalendarAssigned = onValue(assignedCalendarQuery, snap => {
-      employeeCalendarAssignedEvents = snap.val() || {};
+      const incoming = snap.val() || {};
+      const priorIds = new Set(Object.keys({ ...employeeCalendarAllEvents, ...employeeCalendarAssignedEvents }));
+      if (employeeCalendarNotificationReady.assigned && employeeCalendarNotificationReady.all) {
+        for (const [id, item] of Object.entries(incoming)) {
+          if (!priorIds.has(id)) showEmployeeNotification('New calendar event', item.title || 'A work event was added to your calendar.', 'calendar-event:' + id);
+        }
+      }
+      employeeCalendarAssignedEvents = incoming;
+      employeeCalendarNotificationReady.assigned = true;
       renderEmployeeCalendar();
+      scheduleEmployeeCalendarReminders();
     }, error => showDbError(error));
     offCalendarAll = onValue(allCalendarQuery, snap => {
-      employeeCalendarAllEvents = snap.val() || {};
+      const incoming = snap.val() || {};
+      const priorIds = new Set(Object.keys({ ...employeeCalendarAllEvents, ...employeeCalendarAssignedEvents }));
+      if (employeeCalendarNotificationReady.assigned && employeeCalendarNotificationReady.all) {
+        for (const [id, item] of Object.entries(incoming)) {
+          if (!priorIds.has(id)) showEmployeeNotification('New team calendar event', item.title || 'A work event was added for everyone.', 'calendar-event:' + id);
+        }
+      }
+      employeeCalendarAllEvents = incoming;
+      employeeCalendarNotificationReady.all = true;
       renderEmployeeCalendar();
+      scheduleEmployeeCalendarReminders();
     }, error => showDbError(error));
     const approvalRef = ref(db, `accessRequests/${user.uid}`);
     offApproval = onValue(approvalRef, snap => {
@@ -675,8 +700,17 @@ onAuthStateChanged(auth, async user => {
       ref(db, 'tasks'), orderByChild('assigneeUid'), equalTo(userId)
     );
     offTasks = onValue(assignedTasks, snap => {
-      employeeTasks = Object.entries(snap.val() || {})
+      const nextTasks = Object.entries(snap.val() || {})
         .filter(([, task]) => task.assigneeUid === userId);
+      const nextIds = new Set(nextTasks.map(([id]) => id));
+      if (employeeTaskNotificationReady) {
+        for (const [id, task] of nextTasks) {
+          if (!knownEmployeeTaskIds.has(id)) showEmployeeNotification('New task assigned', task.title || 'A new work task was assigned to you.', 'task:' + id);
+        }
+      }
+      knownEmployeeTaskIds = nextIds;
+      employeeTaskNotificationReady = true;
+      employeeTasks = nextTasks;
       cacheValue(`tasks:${userId}`, employeeTasks.map(([id, task]) => [id, { title: task.title || '', status: task.status || 'Assigned', priority: task.priority || '', dueAt: task.dueAt || null }])).catch(() => {});
 
       renderEmployeeTasks();
@@ -688,8 +722,30 @@ onAuthStateChanged(auth, async user => {
 
     const assignedTickets = query(ref(db, 'tickets'), orderByChild('assignedTo'), equalTo(userId));
     offTickets = onValue(assignedTickets, snap => renderTickets(snap.val() || {}), err => showDbError(err));
-    offAnnouncements = onValue(ref(db, 'announcements'), snap => renderAnnouncements(snap.val() || {}), err => showDbError(err));
-    offMessages = onValue(ref(db, `messages/${userId}`), snap => renderMessages(snap.val() || {}), err => showDbError(err));
+    offAnnouncements = onValue(ref(db, 'announcements'), snap => {
+      const data = snap.val() || {};
+      const ids = new Set(Object.keys(data));
+      if (employeeAnnouncementNotificationReady) {
+        for (const [id, item] of Object.entries(data)) {
+          if (!knownEmployeeAnnouncementIds.has(id)) showEmployeeNotification('New announcement', item.title || item.body || 'A new company announcement was published.', 'announcement:' + id);
+        }
+      }
+      knownEmployeeAnnouncementIds = ids;
+      employeeAnnouncementNotificationReady = true;
+      renderAnnouncements(data);
+    }, err => showDbError(err));
+    offMessages = onValue(ref(db, `messages/${userId}`), snap => {
+      const data = snap.val() || {};
+      const ids = new Set(Object.keys(data));
+      if (employeeMessageNotificationReady) {
+        for (const [id, item] of Object.entries(data)) {
+          if (!knownEmployeeMessageIds.has(id) && item.senderRole === 'admin') showEmployeeNotification('New message from administrator', item.text || 'You received a new message.', 'message:' + id);
+        }
+      }
+      knownEmployeeMessageIds = ids;
+      employeeMessageNotificationReady = true;
+      renderMessages(data);
+    }, err => showDbError(err));
     updateConnectionStatus();
     flushOutbox();
 
