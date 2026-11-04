@@ -239,6 +239,108 @@ let offCalendarAll = () => {};
 let employeeCalendarAssignedEvents = {};
 let employeeCalendarAllEvents = {};
 let employeeCalendarSelectedDate = '';
+let employeeTaskNotificationReady = false;
+let employeeAnnouncementNotificationReady = false;
+let employeeMessageNotificationReady = false;
+let employeeCalendarNotificationReady = { assigned: false, all: false };
+let knownEmployeeTaskIds = new Set();
+let knownEmployeeAnnouncementIds = new Set();
+let knownEmployeeMessageIds = new Set();
+let employeeNotificationPluginPromise = null;
+
+function appNotificationId(value) {
+  let hash = 0;
+  for (const char of String(value)) hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  return (Math.abs(hash) % 2147483000) + 1;
+}
+
+async function getEmployeeNotificationPlugin() {
+  if (!window.Capacitor?.isNativePlatform?.()) return null;
+  if (!employeeNotificationPluginPromise) {
+    employeeNotificationPluginPromise = import('https://esm.sh/@capacitor/local-notifications@7.0.3')
+      .then(module => module.LocalNotifications);
+  }
+  return employeeNotificationPluginPromise;
+}
+
+async function requestEmployeeNotificationPermission() {
+  const status = $('employeeNotificationStatus');
+  try {
+    if (window.Capacitor?.isNativePlatform?.()) {
+      const plugin = await getEmployeeNotificationPlugin();
+      const permission = await plugin.requestPermissions();
+      if (permission?.display === 'granted') {
+        if (status) status.textContent = 'Notifications enabled on this device.';
+        scheduleEmployeeCalendarReminders();
+        return true;
+      }
+      if (status) status.textContent = 'Notifications are not enabled. You can allow them in Android settings.';
+      return false;
+    }
+    if (typeof Notification === 'undefined') {
+      if (status) status.textContent = 'This browser does not support notifications.';
+      return false;
+    }
+    const permission = await Notification.requestPermission();
+    if (status) status.textContent = permission === 'granted' ? 'Browser notifications enabled.' : 'Browser notifications were not enabled.';
+    return permission === 'granted';
+  } catch {
+    if (status) status.textContent = 'Could not enable notifications. Check device settings.';
+    return false;
+  }
+}
+
+async function showEmployeeNotification(title, body, key) {
+  try {
+    if (window.Capacitor?.isNativePlatform?.()) {
+      const plugin = await getEmployeeNotificationPlugin();
+      const permission = await plugin.checkPermissions();
+      if (permission?.display !== 'granted') return;
+      await plugin.schedule({
+        notifications: [{
+          id: appNotificationId(key),
+          title: String(title).slice(0, 80),
+          body: String(body || '').slice(0, 220),
+          schedule: { at: new Date(Date.now() + 1000) }
+        }]
+      });
+      return;
+    }
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      new Notification(String(title).slice(0, 80), { body: String(body || '').slice(0, 220), tag: String(key) });
+    }
+  } catch {}
+}
+
+async function scheduleEmployeeCalendarReminders() {
+  if (!window.Capacitor?.isNativePlatform?.()) return;
+  try {
+    const plugin = await getEmployeeNotificationPlugin();
+    const permission = await plugin.checkPermissions();
+    if (permission?.display !== 'granted') return;
+    const events = Object.entries({ ...employeeCalendarAllEvents, ...employeeCalendarAssignedEvents })
+      .map(([id, event]) => ({ ...event, id }));
+    for (const event of events) {
+      const id = appNotificationId('calendar:' + event.id);
+      try { await plugin.cancel({ notifications: [{ id }] }); } catch {}
+      if (event.status === 'cancelled' || !event.reminderMinutes || !event.date || !event.time) continue;
+      const eventTime = new Date(event.date + 'T' + event.time + ':00+05:30');
+      const reminderAt = new Date(eventTime.getTime() - Number(event.reminderMinutes) * 60000);
+      if (!Number.isFinite(reminderAt.getTime()) || reminderAt.getTime() <= Date.now() + 1000) continue;
+      await plugin.schedule({
+        notifications: [{
+          id,
+          title: 'Upcoming work event',
+          body: String(event.title || 'Work event') + ' · ' + event.time,
+          schedule: { at: reminderAt }
+        }]
+      });
+    }
+  } catch {}
+}
+
+$('enableEmployeeNotifications')?.addEventListener('click', requestEmployeeNotificationPermission);
+
 $('approvalSignOut').onclick = () => signOut(auth);
 
 let userId = null;
