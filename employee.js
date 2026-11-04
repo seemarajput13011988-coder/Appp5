@@ -26,6 +26,161 @@ const functions = getFunctions(app, 'asia-south1');
 const getLoginTeams = httpsCallable(functions, 'getLoginTeams');
 const signInWithWorkerId = httpsCallable(functions, 'signInWithWorkerId');
 
+// GPS tracking is scoped to an employee's active shift.
+// Android uses a native foreground service with a persistent notification;
+// the browser fallback works only while the employee page remains open.
+let gpsWatcherId = null;
+let gpsWatcherType = '';
+let gpsStartInProgress = false;
+let gpsLastSaved = null;
+let gpsPluginPromise = null;
+
+async function getNativeGpsPlugins() {
+  if (!window.Capacitor?.isNativePlatform?.() || window.Capacitor?.getPlatform?.() !== 'android') return null;
+  if (!gpsPluginPromise) {
+    gpsPluginPromise = Promise.all([
+      import('https://esm.sh/@capacitor/core@7.4.3'),
+      import('https://esm.sh/@capacitor/local-notifications@7.0.3')
+    ]).then(([core, notifications]) => ({
+      BackgroundGeolocation: core.registerPlugin('BackgroundGeolocation'),
+      LocalNotifications: notifications.LocalNotifications
+    }));
+  }
+  return gpsPluginPromise;
+}
+
+function gpsDistanceMeters(a, b) {
+  const radians = value => value * Math.PI / 180;
+  const dLat = radians(b.latitude - a.latitude);
+  const dLon = radians(b.longitude - a.longitude);
+  const lat1 = radians(a.latitude);
+  const lat2 = radians(b.latitude);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return 6371000 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+async function recordGpsLocation(position, source) {
+  if (!userId || !activeShiftId || !shiftActive) return;
+  const coords = position?.coords || position;
+  const latitude = Number(coords?.latitude);
+  const longitude = Number(coords?.longitude);
+  const accuracy = Number(coords?.accuracy);
+  const capturedAt = Number(position?.time ?? position?.timestamp ?? Date.now());
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+      !Number.isFinite(longitude) || longitude < -180 || longitude > 180 ||
+      !Number.isFinite(accuracy) || accuracy <= 0 || accuracy > 5000 ||
+      !Number.isFinite(capturedAt)) return;
+
+  const current = { latitude, longitude, capturedAt };
+  if (gpsLastSaved) {
+    const elapsed = capturedAt - gpsLastSaved.capturedAt;
+    const distance = gpsDistanceMeters(gpsLastSaved, current);
+    if (elapsed < 30000 && distance < 25) return;
+  }
+
+  const pointRef = push(ref(db, `gpsLocations/${userId}/${activeShiftId}`));
+  await set(pointRef, {
+    latitude,
+    longitude,
+    accuracy: Math.round(accuracy),
+    capturedAt,
+    recordedAt: serverTimestamp(),
+    source
+  });
+  gpsLastSaved = current;
+  const status = $('gpsStatus');
+  if (status) {
+    status.textContent = 'GPS tracking active · last update ' +
+      new Date(capturedAt).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' }) +
+      ' · accuracy ±' + Math.round(accuracy) + ' m';
+  }
+}
+
+function gpsTrackingError(error) {
+  const code = error?.code;
+  const message = code === 1 || code === 'NOT_AUTHORIZED'
+    ? 'Location permission is disabled. Re-enable location permission to resume tracking.'
+    : 'GPS signal is unavailable. Check device location settings and network coverage.';
+  const status = $('gpsStatus');
+  if (status) status.textContent = message + ' Your shift remains active; GPS errors do not automatically change attendance.';
+}
+
+async function startGpsTracking() {
+  if (!userId || !activeShiftId || !shiftActive || gpsWatcherId !== null || gpsStartInProgress) return;
+  gpsStartInProgress = true;
+  gpsLastSaved = null;
+  try {
+    const nativePlugins = await getNativeGpsPlugins();
+    if (nativePlugins) {
+      const notificationPermission = await nativePlugins.LocalNotifications.requestPermissions();
+      if (notificationPermission?.display !== 'granted') {
+        throw new Error('Allow notifications so Android can show the ongoing location-tracking notice.');
+      }
+      gpsWatcherId = await nativePlugins.BackgroundGeolocation.addWatcher({
+        backgroundMessage: 'Your location is shared with K&B NET SERVICE only during your active shift. End your shift to stop tracking.',
+        backgroundTitle: 'K&B Management Nexus · Shift GPS',
+        requestPermissions: true,
+        stale: false,
+        distanceFilter: 25
+      }, (location, error) => {
+        if (error) {
+          gpsTrackingError(error);
+          return;
+        }
+        if (location) recordGpsLocation(location, 'android').catch(() => {
+          const status = $('gpsStatus');
+          if (status) status.textContent = 'GPS fix received, but it could not sync. Check your internet connection.';
+        });
+      });
+      gpsWatcherType = 'native';
+      $('gpsStatus').textContent = 'Background GPS tracking is active. Android shows an ongoing notification while your shift is active.';
+      return;
+    }
+
+    if (!navigator.geolocation) throw new Error('This device does not provide location services to the browser.');
+    gpsWatcherId = navigator.geolocation.watchPosition(
+      position => recordGpsLocation(position, 'web').catch(() => {
+        const status = $('gpsStatus');
+        if (status) status.textContent = 'GPS fix received, but it could not sync. Check your internet connection.';
+      }),
+      gpsTrackingError,
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 5000 }
+    );
+    gpsWatcherType = 'web';
+    $('gpsStatus').textContent = 'GPS tracking is active while this browser page is open. Use the Android app for background tracking.';
+  } catch (error) {
+    const message = error?.message || 'Background GPS could not start.';
+    $('gpsStatus').textContent = message + ' You can still use foreground GPS while this page is open.';
+    if (gpsWatcherId === null && navigator.geolocation) {
+      gpsWatcherId = navigator.geolocation.watchPosition(
+        position => recordGpsLocation(position, 'web').catch(() => {}),
+        gpsTrackingError,
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 5000 }
+      );
+      gpsWatcherType = 'web';
+    }
+  } finally {
+    gpsStartInProgress = false;
+  }
+}
+
+async function stopGpsTracking() {
+  const id = gpsWatcherId;
+  const type = gpsWatcherType;
+  gpsWatcherId = null;
+  gpsWatcherType = '';
+  gpsLastSaved = null;
+  if (type === 'native' && id) {
+    try {
+      const nativePlugins = await getNativeGpsPlugins();
+      await nativePlugins?.BackgroundGeolocation.removeWatcher({ id });
+    } catch {}
+  } else if (type === 'web' && id !== null && navigator.geolocation) {
+    navigator.geolocation.clearWatch(id);
+  }
+}
+
+
 async function loadLoginTeams() {
   const select = $('workerTeam');
   try {
@@ -236,6 +391,7 @@ function authErrorMessage(code) {
 }
 
 onAuthStateChanged(auth, async user => {
+  stopGpsTracking();
   offTasks();
   offShift();
   offRequests();
@@ -358,6 +514,8 @@ onAuthStateChanged(auth, async user => {
 
       $('shiftStatus').textContent =
         shiftActive ? 'On duty' : 'Off duty';
+      if (shiftActive && activeShiftId) startGpsTracking();
+      else stopGpsTracking();
     }, async () => {
       const cached = await readCache(`shifts:${userId}`).catch(() => ({}));
       workerShifts = cached || {};
@@ -421,6 +579,7 @@ onAuthStateChanged(auth, async user => {
 });
 
 $('startShift').onclick = async () => {
+  if (!window.confirm('During your active shift, K&B Management Nexus will collect your location for work attendance and the admin route map. On Android, an ongoing notification remains visible while background tracking is active. Tracking stops when you end your shift. Continue?')) return;
   if (!userId || shiftActive || $('startShift').disabled) return;
   $('startShift').disabled = true;
 
