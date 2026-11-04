@@ -501,6 +501,15 @@ body>main>header{display:none!important}
     </div>
 
     <div class="rounded-2xl border p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h3 class="font-bold">Work calendar</h3>
+        <label class="text-sm">Month<input id="workerCalendarMonth" type="month" class="border rounded-lg p-2 ml-2"></label>
+      </div>
+      <div id="workerCalendarGrid" class="grid grid-cols-7 gap-2 mt-4"></div>
+      <div id="workerCalendarDayEvents" class="mt-4 space-y-3"></div>
+    </div>
+
+    <div class="rounded-2xl border p-5">
       <h3 class="font-bold">My daily attendance</h3>
       <label>Choose date<input id="workerHistoryDate" type="date"></label>
       <div id="workerHistoryList" class="mt-3">Loading attendance…</div>
