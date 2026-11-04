@@ -41,5 +41,9 @@
       ]
     },
     "artifactName": "KB-Enterprise-OS-${version}-${arch}.${ext}"
+  },
+  "dependencies": {
+    "@capacitor-community/background-geolocation": "^1.2.25",
+    "@capacitor/local-notifications": "^7.0.3"
   }
 }

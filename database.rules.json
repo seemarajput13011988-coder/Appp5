@@ -129,6 +129,18 @@
           ".validate": "newData.hasChildren(['workDate','correctedStart','correctedEnd','reason','createdAt','createdBy']) && newData.child('workDate').isString() && newData.child('correctedStart').isString() && newData.child('correctedEnd').isString() && (newData.child('correctedStart').val().length > 0 || newData.child('correctedEnd').val().length > 0) && newData.child('reason').isString() && newData.child('reason').val().length > 0 && newData.child('reason').val().length <= 500 && newData.child('createdAt').isNumber() && newData.child('createdBy').val() === auth.uid"
         }
       }
+    },
+    "gpsLocations": {
+      ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'admin'",
+      "$uid": {
+        ".read": "auth != null && root.child('profiles').child(auth.uid).child('active').val() !== false && (auth.uid === $uid || root.child('profiles').child(auth.uid).child('role').val() === 'admin')",
+        "$shiftId": {
+          "$pointId": {
+            ".write": "auth != null && auth.uid === $uid && root.child('profiles').child(auth.uid).child('active').val() !== false && root.child('profiles').child(auth.uid).child('role').val() === 'employee' && root.child('shifts').child($uid).child($shiftId).child('status').val() === 'active' && !data.exists()",
+            ".validate": "newData.hasChildren(['latitude','longitude','accuracy','capturedAt','recordedAt','source']) && newData.child('latitude').isNumber() && newData.child('latitude').val() >= -90 && newData.child('latitude').val() <= 90 && newData.child('longitude').isNumber() && newData.child('longitude').val() >= -180 && newData.child('longitude').val() <= 180 && newData.child('accuracy').isNumber() && newData.child('accuracy').val() > 0 && newData.child('accuracy').val() <= 5000 && newData.child('capturedAt').isNumber() && newData.child('recordedAt').val() === now && (newData.child('source').val() === 'android' || newData.child('source').val() === 'web')"
+          }
+        }
+      }
     }
   }
 }
