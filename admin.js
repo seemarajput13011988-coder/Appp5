@@ -26,6 +26,75 @@ let calendarCache = {};
 let adminCalendarSelectedDate = '';
 let correctionCache = {};
 let offSelectedMessages = () => {};
+let adminNotificationPluginPromise = null;
+let adminMessageNotificationReady = false;
+let adminTaskRequestNotificationReady = false;
+let knownAdminMessageIds = {};
+let knownAdminTaskRequestIds = new Set();
+
+function adminNotificationId(value) {
+  let hash = 0;
+  for (const char of String(value)) hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  return (Math.abs(hash) % 2147483000) + 1;
+}
+
+async function getAdminNotificationPlugin() {
+  if (!window.Capacitor?.isNativePlatform?.()) return null;
+  if (!adminNotificationPluginPromise) {
+    adminNotificationPluginPromise = import('https://esm.sh/@capacitor/local-notifications@7.0.3')
+      .then(module => module.LocalNotifications);
+  }
+  return adminNotificationPluginPromise;
+}
+
+async function requestAdminNotificationPermission() {
+  const status = $('adminNotificationStatus');
+  try {
+    if (window.Capacitor?.isNativePlatform?.()) {
+      const plugin = await getAdminNotificationPlugin();
+      const permission = await plugin.requestPermissions();
+      if (status) status.textContent = permission?.display === 'granted'
+        ? 'Admin notifications enabled on this device.'
+        : 'Notifications are not enabled. Allow them in Android settings.';
+      return permission?.display === 'granted';
+    }
+    if (typeof Notification === 'undefined') {
+      if (status) status.textContent = 'This browser does not support notifications.';
+      return false;
+    }
+    const permission = await Notification.requestPermission();
+    if (status) status.textContent = permission === 'granted' ? 'Browser notifications enabled.' : 'Browser notifications were not enabled.';
+    return permission === 'granted';
+  } catch {
+    if (status) status.textContent = 'Could not enable notifications. Check device settings.';
+    return false;
+  }
+}
+
+async function showAdminNotification(title, body, key) {
+  try {
+    if (window.Capacitor?.isNativePlatform?.()) {
+      const plugin = await getAdminNotificationPlugin();
+      const permission = await plugin.checkPermissions();
+      if (permission?.display !== 'granted') return;
+      await plugin.schedule({
+        notifications: [{
+          id: adminNotificationId(key),
+          title: String(title).slice(0, 80),
+          body: String(body || '').slice(0, 220),
+          schedule: { at: new Date(Date.now() + 1000) }
+        }]
+      });
+      return;
+    }
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      new Notification(String(title).slice(0, 80), { body: String(body || '').slice(0, 220), tag: String(key) });
+    }
+  } catch {}
+}
+
+$('enableAdminNotifications')?.addEventListener('click', requestAdminNotificationPermission);
+
 $('signIn').onclick = async () => {
   const button = $('signIn');
   button.disabled = true;
@@ -252,7 +321,20 @@ async function loadDashboardData(user) {
     }, error => databaseError(error, 'tasks')));
 
     unsub.push(onValue(ref(db, 'taskRequests'), snap => {
-      requestsCache = snap.val() || {};
+      const incoming = snap.val() || {};
+      const nextIds = new Set();
+      for (const [uid, requests] of Object.entries(incoming)) {
+        for (const [requestId, request] of Object.entries(requests || {})) {
+          nextIds.add(uid + '/' + requestId);
+          if (adminTaskRequestNotificationReady && !knownAdminTaskRequestIds.has(uid + '/' + requestId)) {
+            const workerName = employees[uid]?.name || 'An employee';
+            showAdminNotification('Employee task update', workerName + ' submitted a task update for review.', 'task-request:' + uid + ':' + requestId);
+          }
+        }
+      }
+      knownAdminTaskRequestIds = nextIds;
+      adminTaskRequestNotificationReady = true;
+      requestsCache = incoming;
       renderTaskReviews();
     }, error => databaseError(error, 'task requests')));
 
@@ -262,6 +344,24 @@ async function loadDashboardData(user) {
     }, error => databaseError(error, 'access requests')));
 
     unsub.push(onValue(ref(db, 'tickets'), snap => { ticketCache = snap.val() || {}; $('ticketCount').textContent = Object.keys(ticketCache).length; renderTickets(); renderWorkerRecords(); }, databaseError));
+    unsub.push(onValue(ref(db, 'messages'), snap => {
+      const incoming = snap.val() || {};
+      const nextIds = {};
+      for (const [uid, thread] of Object.entries(incoming)) {
+        const ids = new Set();
+        for (const [messageId, message] of Object.entries(thread || {})) {
+          ids.add(messageId);
+          if (adminMessageNotificationReady && message.senderRole === 'employee' && !knownAdminMessageIds[uid]?.has(messageId)) {
+            const workerName = employees[uid]?.name || 'An employee';
+            showAdminNotification('New employee message', workerName + ': ' + (message.text || 'New message received.'), 'employee-message:' + uid + ':' + messageId);
+          }
+        }
+        nextIds[uid] = ids;
+      }
+      knownAdminMessageIds = nextIds;
+      adminMessageNotificationReady = true;
+    }, error => databaseError(error, 'employee messages')));
+
     unsub.push(onValue(ref(db, 'announcements'), snap => { announcementCache = snap.val() || {}; renderAnnouncementList(); }, databaseError));
     unsub.push(onValue(ref(db, 'calendarEvents'), snap => {
       calendarCache = snap.val() || {};
@@ -312,6 +412,10 @@ async function loadDashboardData(user) {
 }
 
 onAuthStateChanged(auth, async user => {
+  adminMessageNotificationReady = false;
+  adminTaskRequestNotificationReady = false;
+  knownAdminMessageIds = {};
+  knownAdminTaskRequestIds = new Set();
   if ($('adminCalendarMonth')) {
     $('adminCalendarMonth').value = indiaDate(Date.now()).slice(0, 7);
     $('calendarDate').value = indiaDate(Date.now());
