@@ -22,6 +22,8 @@ let announcementCache = {};
 let auditCache = {};
 let shiftCache = {};
 let gpsLocationCache = {};
+let calendarCache = {};
+let adminCalendarSelectedDate = '';
 let correctionCache = {};
 let offSelectedMessages = () => {};
 $('signIn').onclick = async () => {
@@ -127,6 +129,8 @@ async function loadDashboardData(user) {
       const recordSelection = $('recordEmployee').value;
       $('recordEmployee').replaceChildren(new Option('Select worker', ''));
       $('attendanceCorrectionEmployee').replaceChildren(new Option('Select employee', ''));
+      const calendarSelection = $('calendarAssignee')?.value || 'all';
+      $('calendarAssignee')?.replaceChildren(new Option('All employees', 'all'));
 
 
       for (const [uid, profile] of Object.entries(employees)) {
@@ -224,10 +228,12 @@ async function loadDashboardData(user) {
           $('adminTicketAssignee').add(new Option(profile.name || uid, uid));
           $('messageEmployee').add(new Option(profile.name || uid, uid));
           $('attendanceCorrectionEmployee').add(new Option(profile.name || uid, uid));
+          $('calendarAssignee')?.add(new Option(profile.name || uid, uid));
         }
         $('recordEmployee').add(new Option((isActive ? '' : '[Inactive] ') + (profile.name || uid), uid));
       }
 
+      if ([...($('calendarAssignee')?.options || [])].some(option => option.value === calendarSelection)) $('calendarAssignee').value = calendarSelection;
       filterEmployeeDirectory();
       if (employees[recordSelection]) $('recordEmployee').value = recordSelection;
       renderWorkerRecords();
@@ -257,6 +263,10 @@ async function loadDashboardData(user) {
 
     unsub.push(onValue(ref(db, 'tickets'), snap => { ticketCache = snap.val() || {}; $('ticketCount').textContent = Object.keys(ticketCache).length; renderTickets(); renderWorkerRecords(); }, databaseError));
     unsub.push(onValue(ref(db, 'announcements'), snap => { announcementCache = snap.val() || {}; renderAnnouncementList(); }, databaseError));
+    unsub.push(onValue(ref(db, 'calendarEvents'), snap => {
+      calendarCache = snap.val() || {};
+      renderAdminCalendar();
+    }, error => databaseError(error, 'calendar events')));
     unsub.push(onValue(ref(db, 'auditLogs'), snap => { auditCache = snap.val() || {}; renderAudit(); }, databaseError));
 
     unsub.push(onValue(ref(db, 'gpsLocations'), snap => {
@@ -302,6 +312,11 @@ async function loadDashboardData(user) {
 }
 
 onAuthStateChanged(auth, async user => {
+  if ($('adminCalendarMonth')) {
+    $('adminCalendarMonth').value = indiaDate(Date.now()).slice(0, 7);
+    $('calendarDate').value = indiaDate(Date.now());
+    adminCalendarSelectedDate = indiaDate(Date.now());
+  }
   unsub.forEach(fn => fn());
   unsub = [];
   if (!user) {
@@ -509,6 +524,148 @@ function renderGpsLocations() {
     box.append(card);
   }
 }
+
+function renderAdminCalendar() {
+  const grid = $('adminCalendarGrid');
+  const eventBox = $('adminCalendarDayEvents');
+  const monthInput = $('adminCalendarMonth');
+  if (!grid || !eventBox || !monthInput) return;
+  if (!monthInput.value) monthInput.value = indiaDate(Date.now()).slice(0, 7);
+  const [year, month] = monthInput.value.split('-').map(Number);
+  if (!year || !month) return;
+  if (!adminCalendarSelectedDate || !adminCalendarSelectedDate.startsWith(monthInput.value)) {
+    adminCalendarSelectedDate = monthInput.value + '-01';
+  }
+
+  const events = Object.entries(calendarCache || {})
+    .map(([id, event]) => ({ ...event, id }))
+    .filter(event => event.status !== 'cancelled')
+    .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const firstWeekday = new Date(year, month - 1, 1).getDay();
+  grid.replaceChildren();
+  for (const dayName of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']) {
+    const label = document.createElement('div');
+    label.className = 'text-center text-xs font-semibold text-slate-500 py-1';
+    label.textContent = dayName;
+    grid.append(label);
+  }
+  for (let i = 0; i < firstWeekday; i++) {
+    const blank = document.createElement('div');
+    blank.setAttribute('aria-hidden', 'true');
+    grid.append(blank);
+  }
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = monthInput.value + '-' + String(day).padStart(2, '0');
+    const count = events.filter(event => event.date === date).length;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'min-h-16 rounded-xl border p-2 text-left text-sm ' +
+      (adminCalendarSelectedDate === date ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white');
+    const number = document.createElement('span');
+    number.className = 'block font-semibold';
+    number.textContent = String(day);
+    button.append(number);
+    if (count) {
+      const countLabel = document.createElement('span');
+      countLabel.className = 'block text-xs text-indigo-700 mt-1';
+      countLabel.textContent = count + (count === 1 ? ' event' : ' events');
+      button.append(countLabel);
+    }
+    button.onclick = () => { adminCalendarSelectedDate = date; renderAdminCalendar(); };
+    grid.append(button);
+  }
+
+  eventBox.replaceChildren();
+  const dayEvents = events.filter(event => event.date === adminCalendarSelectedDate);
+  const heading = document.createElement('h3');
+  heading.className = 'font-bold';
+  heading.textContent = 'Events · ' + adminCalendarSelectedDate;
+  eventBox.append(heading);
+  if (!dayEvents.length) {
+    const empty = document.createElement('p');
+    empty.className = 'muted text-sm';
+    empty.textContent = 'No events scheduled for this date.';
+    eventBox.append(empty);
+    return;
+  }
+  for (const event of dayEvents) {
+    const card = document.createElement('article');
+    card.className = 'border rounded-xl p-3';
+    const title = document.createElement('strong');
+    title.textContent = event.title || 'Untitled event';
+    const meta = document.createElement('p');
+    meta.className = 'muted text-sm mt-1';
+    const assigned = event.assignedTo === 'all' ? 'All employees' : (employees[event.assignedTo]?.name || 'Assigned employee');
+    meta.textContent = (event.time || 'Time not set') + ' · ' + assigned + ' · Reminder: ' + (event.reminderMinutes || 0) + ' min';
+    const description = document.createElement('p');
+    description.className = 'text-sm mt-2';
+    description.textContent = event.description || '';
+    card.append(title, meta, description);
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'mt-3 rounded-lg border px-3 py-2 text-xs font-semibold text-rose-700';
+    cancel.textContent = 'Cancel event';
+    cancel.onclick = async () => {
+      if (!auth.currentUser || !confirm('Cancel this calendar event?')) return;
+      cancel.disabled = true;
+      try {
+        await update(ref(db, 'calendarEvents/' + event.id), {
+          status: 'cancelled',
+          cancelledAt: serverTimestamp(),
+          cancelledBy: auth.currentUser.uid
+        });
+        await writeAudit('calendar.event.cancelled', event.id);
+      } catch {
+        $('actionError').textContent = 'Could not cancel calendar event. Check Firebase rules.';
+        cancel.disabled = false;
+      }
+    };
+    card.append(cancel);
+    eventBox.append(card);
+  }
+}
+
+$('adminCalendarMonth')?.addEventListener('change', () => {
+  adminCalendarSelectedDate = $('adminCalendarMonth').value + '-01';
+  renderAdminCalendar();
+});
+$('calendarEventForm')?.addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!auth.currentUser) return;
+  const title = $('calendarTitle').value.trim();
+  const date = $('calendarDate').value;
+  const time = $('calendarTime').value;
+  const assignedTo = $('calendarAssignee').value;
+  if (!title || !date || !time || !assignedTo) {
+    $('actionError').textContent = 'Enter an event title, date, time, and assignee.';
+    return;
+  }
+  const id = push(ref(db, 'calendarEvents')).key;
+  const button = $('calendarEventForm').querySelector('button[type="submit"],button:not([type])');
+  if (button) button.disabled = true;
+  try {
+    await set(ref(db, 'calendarEvents/' + id), {
+      title, date, time, assignedTo,
+      description: $('calendarDescription').value.trim(),
+      reminderMinutes: Number($('calendarReminder').value) || 0,
+      status: 'scheduled',
+      createdAt: serverTimestamp(),
+      createdBy: auth.currentUser.uid
+    });
+    await writeAudit('calendar.event.created', id);
+    $('calendarEventForm').reset();
+    $('calendarDate').value = indiaDate(Date.now());
+    $('calendarReminder').value = '15';
+    adminCalendarSelectedDate = date;
+    $('adminCalendarMonth').value = date.slice(0, 7);
+    $('actionError').textContent = 'Event added to the work calendar.';
+  } catch {
+    $('actionError').textContent = 'Could not add calendar event. Check Firebase rules.';
+  } finally {
+    if (button) button.disabled = false;
+  }
+});
 
 function indiaDate(timestamp) {
   if (typeof timestamp !== 'number' || !Number.isFinite(timestamp)) return '';
