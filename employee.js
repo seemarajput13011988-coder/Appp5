@@ -234,6 +234,11 @@ let offAnnouncements = () => {};
 let offMessages = () => {};
 let offApproval = () => {};
 let offCorrections = () => {};
+let offCalendarAssigned = () => {};
+let offCalendarAll = () => {};
+let employeeCalendarAssignedEvents = {};
+let employeeCalendarAllEvents = {};
+let employeeCalendarSelectedDate = '';
 $('approvalSignOut').onclick = () => signOut(auth);
 
 let userId = null;
@@ -400,6 +405,10 @@ onAuthStateChanged(auth, async user => {
   offMessages();
   offApproval();
   offCorrections();
+  offCalendarAssigned();
+  offCalendarAll();
+  employeeCalendarAssignedEvents = {};
+  employeeCalendarAllEvents = {};
   workerCorrections = {};
   userId = null;
   $('approvalStatus').classList.add('hidden');
@@ -477,6 +486,20 @@ onAuthStateChanged(auth, async user => {
     }
 
     userId = user.uid;
+    $('workerCalendarMonth').value = workDate(Date.now()).slice(0, 7);
+    employeeCalendarSelectedDate = workDate(Date.now());
+    renderEmployeeCalendar();
+
+    const assignedCalendarQuery = query(ref(db, 'calendarEvents'), orderByChild('assignedTo'), equalTo(userId));
+    const allCalendarQuery = query(ref(db, 'calendarEvents'), orderByChild('assignedTo'), equalTo('all'));
+    offCalendarAssigned = onValue(assignedCalendarQuery, snap => {
+      employeeCalendarAssignedEvents = snap.val() || {};
+      renderEmployeeCalendar();
+    }, error => showDbError(error));
+    offCalendarAll = onValue(allCalendarQuery, snap => {
+      employeeCalendarAllEvents = snap.val() || {};
+      renderEmployeeCalendar();
+    }, error => showDbError(error));
     const approvalRef = ref(db, `accessRequests/${user.uid}`);
     offApproval = onValue(approvalRef, snap => {
       const request = snap.val();
@@ -681,6 +704,93 @@ $('ticketForm').onsubmit = async event => {
     $('ticketForm').reset(); $('taskFeedback').textContent = 'Ticket created.';
   } catch { $('actionError').textContent = 'Could not create ticket. Check database access.'; }
 };
+
+function renderEmployeeCalendar() {
+  const grid = $('workerCalendarGrid');
+  const eventBox = $('workerCalendarDayEvents');
+  const monthInput = $('workerCalendarMonth');
+  if (!grid || !eventBox || !monthInput) return;
+  if (!monthInput.value) monthInput.value = workDate(Date.now()).slice(0, 7);
+  const [year, month] = monthInput.value.split('-').map(Number);
+  if (!year || !month) return;
+  if (!employeeCalendarSelectedDate || !employeeCalendarSelectedDate.startsWith(monthInput.value)) {
+    employeeCalendarSelectedDate = monthInput.value + '-01';
+  }
+
+  const events = Object.entries({ ...employeeCalendarAllEvents, ...employeeCalendarAssignedEvents })
+    .map(([id, event]) => ({ ...event, id }))
+    .filter(event => event.status !== 'cancelled')
+    .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const firstWeekday = new Date(year, month - 1, 1).getDay();
+  grid.replaceChildren();
+  for (const dayName of ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']) {
+    const label = document.createElement('div');
+    label.className = 'text-center text-xs font-semibold text-slate-500 py-1';
+    label.textContent = dayName;
+    grid.append(label);
+  }
+  for (let i = 0; i < firstWeekday; i++) {
+    const blank = document.createElement('div');
+    blank.setAttribute('aria-hidden', 'true');
+    grid.append(blank);
+  }
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = monthInput.value + '-' + String(day).padStart(2, '0');
+    const count = events.filter(event => event.date === date).length;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'min-h-16 rounded-xl border p-2 text-left text-sm ' +
+      (employeeCalendarSelectedDate === date ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 bg-white');
+    const number = document.createElement('span');
+    number.className = 'block font-semibold';
+    number.textContent = String(day);
+    button.append(number);
+    if (count) {
+      const countLabel = document.createElement('span');
+      countLabel.className = 'block text-xs text-indigo-700 mt-1';
+      countLabel.textContent = count + (count === 1 ? ' event' : ' events');
+      button.append(countLabel);
+    }
+    button.onclick = () => { employeeCalendarSelectedDate = date; renderEmployeeCalendar(); };
+    grid.append(button);
+  }
+
+  eventBox.replaceChildren();
+  const dayEvents = events.filter(event => event.date === employeeCalendarSelectedDate);
+  const heading = document.createElement('h4');
+  heading.className = 'font-bold';
+  heading.textContent = 'Your events · ' + employeeCalendarSelectedDate;
+  eventBox.append(heading);
+  if (!dayEvents.length) {
+    const empty = document.createElement('p');
+    empty.className = 'muted text-sm';
+    empty.textContent = 'No work events scheduled for this date.';
+    eventBox.append(empty);
+    return;
+  }
+  for (const event of dayEvents) {
+    const card = document.createElement('article');
+    card.className = 'border rounded-xl p-3';
+    const title = document.createElement('strong');
+    title.textContent = event.title || 'Work event';
+    const meta = document.createElement('p');
+    meta.className = 'muted text-sm mt-1';
+    meta.textContent = (event.time || 'Time not set') + ' · ' +
+      (event.assignedTo === 'all' ? 'For all employees' : 'Assigned to you') +
+      (event.reminderMinutes ? ' · Reminder ' + event.reminderMinutes + ' min before' : '');
+    const description = document.createElement('p');
+    description.className = 'text-sm mt-2';
+    description.textContent = event.description || '';
+    card.append(title, meta, description);
+    eventBox.append(card);
+  }
+}
+
+$('workerCalendarMonth')?.addEventListener('change', () => {
+  employeeCalendarSelectedDate = $('workerCalendarMonth').value + '-01';
+  renderEmployeeCalendar();
+});
 
 function renderAnnouncements(data) {
   const box = $('announcements'); box.replaceChildren();
