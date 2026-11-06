@@ -526,6 +526,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         <h2 class="font-bold">GPS locations</h2>
         <p class="muted mt-2">Shows route points collected during an employee-approved active shift. Android background tracking displays an ongoing notification to the employee; browser tracking is limited to an open page.</p>
         <p id="gpsMapSummary" class="text-sm text-indigo-700 mt-3" role="status"></p>
+        <label class="grid gap-1 text-sm font-semibold mt-4">Filter staff member
+          <select id="gpsEmployeeFilter" class="border rounded-xl p-3"><option value="all">All staff members</option></select>
+        </label>
+        <p class="muted text-xs mt-2">Location updates are shown only when an employee has approved location access during an active shift. Fetch latest update reads the newest point already synced by that employee's device.</p>
         <div id="gpsMapList" class="mt-4"></div>
       </div>
     </section>
