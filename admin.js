@@ -525,6 +525,16 @@ function renderGpsLocations() {
   box.replaceChildren();
   const locations = [];
   const routeShiftKeys = new Set();
+  const staffFilter = $('gpsEmployeeFilter');
+  if (staffFilter) {
+    const selected = staffFilter.value || 'all';
+    staffFilter.replaceChildren(new Option('All staff members', 'all'));
+    for (const [uid, profile] of Object.entries(employees || {})) {
+      if (profile.active === false || ['inactive', 'archived'].includes(profile.status)) continue;
+      staffFilter.add(new Option(profile.name || uid, uid));
+    }
+    if ([...staffFilter.options].some(option => option.value === selected)) staffFilter.value = selected;
+  }
 
   for (const [uid, shifts] of Object.entries(gpsLocationCache || {})) {
     for (const [shiftId, pointMap] of Object.entries(shifts || {})) {
@@ -562,13 +572,20 @@ function renderGpsLocations() {
     }
   }
 
-  locations.sort((a, b) => (b.location.capturedAt || b.timestamp || 0) - (a.location.capturedAt || a.timestamp || 0));
-  const routeCount = locations.filter(item => item.route).reduce((sum, item) => sum + item.route.length, 0);
-  $('gpsMapSummary').textContent = locations.length
-    ? locations.length + ' employee route/location record' + (locations.length === 1 ? '' : 's') + ' · ' + routeCount + ' route updates · newest first'
-    : 'No GPS points recorded yet. Employees must approve location access when starting a shift.';
+  const staffWithPoints = new Set(locations.map(item => item.uid));
+  for (const [uid, profile] of Object.entries(employees || {})) {
+    if (profile.active === false || ['inactive', 'archived'].includes(profile.status) || staffWithPoints.has(uid)) continue;
+    locations.push({uid, shiftId:'', kind:'No GPS update yet', location:null, name:profile.name || uid, team:profile.team || 'Unassigned', timestamp:0});
+  }
+  const selectedStaff = staffFilter?.value || 'all';
+  const visibleLocations = selectedStaff === 'all' ? locations : locations.filter(item => item.uid === selectedStaff);
+  visibleLocations.sort((a, b) => ((b.location?.capturedAt || b.timestamp || 0) - (a.location?.capturedAt || a.timestamp || 0)));
+  const routeCount = visibleLocations.filter(item => item.route).reduce((sum, item) => sum + item.route.length, 0);
+  $('gpsMapSummary').textContent = visibleLocations.length
+    ? visibleLocations.length + ' staff member' + (visibleLocations.length === 1 ? '' : 's') + ' shown · ' + routeCount + ' route updates · newest first'
+    : 'No staff records are available.';
 
-  if (!locations.length) {
+  if (!visibleLocations.length) {
     const empty = document.createElement('p');
     empty.className = 'muted mt-3';
     empty.textContent = 'No location data available.';
@@ -607,7 +624,24 @@ function renderGpsLocations() {
     map.loading = 'lazy';
     map.title = 'Latest recorded location for ' + item.name;
     map.referrerPolicy = 'no-referrer';
-    card.append(title, team, pill, time, coordinates, link, map);
+    const fetchLatest = document.createElement('button');
+    fetchLatest.type = 'button';
+    fetchLatest.className = 'mt-3 rounded-xl px-3 py-2 text-sm font-semibold';
+    fetchLatest.textContent = 'Fetch latest update';
+    fetchLatest.onclick = async () => {
+      fetchLatest.disabled = true;
+      fetchLatest.textContent = 'Fetching…';
+      try {
+        const snapshot = await get(ref(db, 'gpsLocations/' + item.uid));
+        gpsLocationCache[item.uid] = snapshot.val() || {};
+        renderGpsLocations();
+      } catch {
+        $('gpsMapSummary').textContent = 'Could not fetch the latest synced location. Check connection and Firebase permissions.';
+        fetchLatest.disabled = false;
+        fetchLatest.textContent = 'Retry latest update';
+      }
+    };
+    card.append(title, team, pill, time, coordinates, link, map, fetchLatest);
 
     if (item.route?.length) {
       const details = document.createElement('details');
@@ -628,6 +662,8 @@ function renderGpsLocations() {
     box.append(card);
   }
 }
+
+$('gpsEmployeeFilter')?.addEventListener('change', renderGpsLocations);
 
 function renderAdminCalendar() {
   const grid = $('adminCalendarGrid');
