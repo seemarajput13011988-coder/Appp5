@@ -593,7 +593,20 @@ function renderGpsLocations() {
     return;
   }
 
-  for (const item of locations) {
+  for (const item of visibleLocations) {
+    if (!item.location) {
+      const waiting = document.createElement('article');
+      waiting.className = 'gps-card';
+      const heading = document.createElement('h3');
+      heading.className = 'font-bold';
+      heading.textContent = item.name + ' · No GPS update yet';
+      const note = document.createElement('p');
+      note.className = 'muted text-sm mt-2';
+      note.textContent = 'Team: ' + item.team + '. The employee must start an active shift and allow location access. A device that has not shared a point cannot be remotely located.';
+      waiting.append(heading, note);
+      box.append(waiting);
+      continue;
+    }
     const lat = item.location.latitude, lon = item.location.longitude;
     const card = document.createElement('article');
     card.className = 'gps-card';
