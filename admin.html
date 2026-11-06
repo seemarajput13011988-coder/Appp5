@@ -340,7 +340,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
  #dashboard main{padding-left:10px!important;padding-right:10px!important}
 }
 </style>
-</head>
+<style id="kb-festival-touch">html,body{touch-action:pan-x pan-y;-webkit-tap-highlight-color:transparent}button,a,[role="button"],.nav{touch-action:manipulation;-webkit-tap-highlight-color:transparent}button:active,.nav:active{filter:brightness(.94);transform:translateY(1px)}button:disabled{pointer-events:none}.kb-festival-toggle{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:9998;border:1px solid #f4c66a;background:linear-gradient(135deg,#fff7d6,#ffdf9b);color:#713f12;border-radius:999px;padding:11px 16px;font-weight:800;box-shadow:0 8px 24px #8a4b142e;min-height:46px}.kb-festival-layer{position:fixed;inset:0;z-index:9997;pointer-events:none;overflow:hidden;display:none}.kb-festival-layer.active{display:block}.kb-festival-banner{position:absolute;top:12px;left:50%;transform:translateX(-50%);padding:10px 18px;border-radius:999px;background:linear-gradient(120deg,#fff1c2,#ffe0a3);color:#713f12;font-weight:800;box-shadow:0 8px 28px #713f1226;white-space:nowrap}.kb-festival-spark{position:absolute;top:-24px;font-size:22px;animation:kbFestivalFall var(--dur,3s) linear forwards;opacity:.95}@keyframes kbFestivalFall{to{transform:translate3d(var(--drift,20px),110vh,0) rotate(540deg);opacity:.1}}@media(prefers-reduced-motion:reduce){.kb-festival-spark{display:none;animation:none!important}}</style></head>
 <body class="bg-slate-100 text-slate-900">
 
 <section id="login" class="min-h-screen grid place-items-center p-5">
@@ -683,5 +683,5 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 <script type="module" src="./admin.js"></script>
 <script type="module" src="./enterprise-admin.js"></script>
 <script>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));</script>
-</body>
+<div id="kbFestivalLayer" class="kb-festival-layer" aria-hidden="true"></div><button id="kbFestivalToggle" class="kb-festival-toggle" type="button" aria-pressed="false">🪔 Celebrate</button><script type="module" src="./festival.js"></script></body>
 </html>
