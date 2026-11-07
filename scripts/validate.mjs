@@ -13,9 +13,11 @@ const jsFiles = [
   'firebase.js',
   'scripts/build-web.mjs',
   'server.js',
-  'electron/main.cjs'
+  'electron/main.cjs',
+  'functions/index.js',
+  'functions/shift-policy.js'
 ];
-const jsonFiles = ['package.json', 'database.rules.json', 'manifest.webmanifest', 'capacitor.config.json'];
+const jsonFiles = ['package.json', 'database.rules.json', 'manifest.webmanifest', 'capacitor.config.json', 'firebase.json', 'functions/package.json'];
 const errors = [];
 
 async function read(path) {
@@ -95,7 +97,11 @@ const approvalChecks = [
   [enterpriseAdminSource.includes('let decisionInProgress = false') && enterpriseAdminSource.includes('decisionButtons.forEach(action => { action.disabled = true; });'), 'Employee request review must prevent conflicting approve/decline clicks'],
   [electronSource.includes("window.loadFile(path.join(__dirname, '..', 'dist', 'employee.html'))"), 'Desktop employee menu must open the employee portal, not the workspace launcher'],
   [employeeSource.includes("task.status === 'Rework Required'") && employeeSource.includes("[['Submit completion', 'complete']]"), 'Employees must be able to resubmit tasks returned for rework'],
-  [employeeSource.includes("request.taskId === id && request.state === 'pending'") && employeeSource.includes('waiting for administrator review'), 'Employee task UI must prevent duplicate submissions while a review is pending']
+  [employeeSource.includes("request.taskId === id && request.state === 'pending'") && employeeSource.includes('waiting for administrator review'), 'Employee task UI must prevent duplicate submissions while a review is pending'],
+  [employeeSource.includes('employeeShiftHoursOpen') && employeeSource.includes('480') && employeeSource.includes('1140'), 'Employee shift actions must be limited to 8 AM–7 PM India time'],
+  [adminSource.includes('adminStartEmployeeShift') && adminSource.includes('adminEndEmployeeShift') && adminSource.includes('renderAttendanceList'), 'Admin attendance must provide manual start/end controls'],
+  [rulesSource.includes('startedByAdmin') && rulesSource.includes('endedByAdmin') && rulesSource.includes('19800000'), 'Database rules must enforce employee shift hours and admin overrides'],
+  [(await read('functions/index.js')).includes('Asia/Kolkata') && (await read('functions/index.js')).includes('0 19 * * *'), 'Scheduled shift closure must run at 7 PM India time']
 ];
 for (const [passed, message] of approvalChecks) {
   if (!passed) errors.push(`Approval-flow regression check failed: ${message}`);

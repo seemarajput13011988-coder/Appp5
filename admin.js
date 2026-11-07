@@ -159,6 +159,73 @@ function makeRow(text) {
   return el;
 }
 
+async function adminStartEmployeeShift(uid) {
+  const actor = auth.currentUser, profile = employees[uid];
+  if (!actor || !profile || profile.active === false || profile.disabled === true || ['inactive','archived'].includes(profile.status)) {
+    $('actionError').textContent = 'This employee is not active or cannot be started.';
+    return;
+  }
+  if (Object.values(shiftCache[uid] || {}).some(shift => shift.status === 'active')) {
+    $('actionError').textContent = 'This employee already has an active shift.';
+    return;
+  }
+  try {
+    const shiftRef = push(ref(db, 'shifts/' + uid));
+    await set(shiftRef, { status:'active', startedAt:serverTimestamp(), startedByAdmin:actor.uid, startMethod:'admin' });
+    await writeAudit('attendance.admin_shift_started', uid + '/' + shiftRef.key);
+    $('actionError').textContent = 'Shift started for ' + (profile.name || uid) + '.';
+  } catch (error) { databaseError(error, 'administrator shift start'); }
+}
+
+async function adminEndEmployeeShift(uid, shiftId) {
+  const actor = auth.currentUser, shift = shiftCache[uid]?.[shiftId];
+  if (!actor || !shift || shift.status !== 'active') {
+    $('actionError').textContent = 'This shift is no longer active. Refreshing attendance data.';
+    return;
+  }
+  try {
+    await update(ref(db, 'shifts/' + uid + '/' + shiftId), {
+      status:'ended', endedAt:serverTimestamp(), endedByAdmin:actor.uid, endReason:'admin_manual'
+    });
+    await writeAudit('attendance.admin_shift_ended', uid + '/' + shiftId);
+    $('actionError').textContent = 'Shift ended for ' + (employees[uid]?.name || uid) + '.';
+  } catch (error) { databaseError(error, 'administrator shift end'); }
+}
+
+function renderAttendanceList() {
+  const box = $('attendanceList');
+  if (!box) return;
+  const ids = new Set([...Object.keys(employees || {}), ...Object.keys(shiftCache || {})]);
+  const rows = [];
+  const formatTime = value => Number.isFinite(Number(value))
+    ? new Date(Number(value)).toLocaleString('en-IN', { timeZone:'Asia/Kolkata' })
+    : 'Time unavailable';
+  for (const uid of [...ids].sort((a,b) => String(employees[a]?.name || a).localeCompare(String(employees[b]?.name || b)))) {
+    const profile = employees[uid] || {}, name = profile.name || uid;
+    const records = Object.entries(shiftCache[uid] || {}).sort((a,b) => (Number(b[1]?.startedAt)||0)-(Number(a[1]?.startedAt)||0));
+    const active = records.find(([,shift]) => shift?.status === 'active');
+    const row = makeRow(name + (active ? ' · On duty since ' + formatTime(active[1].startedAt) : ' · Off duty · No active shift'));
+    if (active) {
+      const button = document.createElement('button');
+      button.type='button'; button.className='ml-2 rounded-lg px-3 py-2 text-xs font-semibold';
+      button.textContent='End shift'; button.onclick=()=>adminEndEmployeeShift(uid,active[0]); row.append(button);
+    } else if (profile.role === 'employee' && profile.active !== false && profile.disabled !== true && !['inactive','archived'].includes(profile.status)) {
+      const button = document.createElement('button');
+      button.type='button'; button.className='ml-2 rounded-lg px-3 py-2 text-xs font-semibold';
+      button.textContent='Start shift'; button.onclick=()=>adminStartEmployeeShift(uid); row.append(button);
+    }
+    rows.push(row);
+    for (const [id,shift] of records) {
+      if (active && id === active[0]) continue;
+      const gps = shift.location && Number.isFinite(shift.location.latitude) && Number.isFinite(shift.location.longitude)
+        ? ' · GPS ' + shift.location.latitude.toFixed(5) + ', ' + shift.location.longitude.toFixed(5) : '';
+      rows.push(makeRow(name + ' · ' + (shift.status || 'unknown') + ' · ' + formatTime(shift.startedAt) + gps));
+    }
+  }
+  box.replaceChildren(...rows);
+  if (!rows.length) box.textContent='No employee or attendance records found.';
+}
+
 function filterEmployeeDirectory() {
   const search = ($('employeeSearch')?.value || '').trim().toLowerCase();
   const status = $('employeeStatusFilter')?.value || 'all';
@@ -309,6 +376,7 @@ async function loadDashboardData(user) {
       renderTaskReviews();
       renderTeamManagement();
       renderGpsLocations();
+      renderAttendanceList();
       renderAttendanceCorrections();
     }, error => databaseError(error, 'employee profiles')));
 
@@ -376,27 +444,10 @@ async function loadDashboardData(user) {
 
     unsub.push(onValue(ref(db, 'shifts'), snap => {
       shiftCache = snap.val() || {};
-      let active = 0;
-      const rows = [];
-
-      for (const [uid, records] of Object.entries(shiftCache)) {
-        for (const [id, shift] of Object.entries(records || {})) {
-          if (shift.status === 'active') active++;
-
-          const date = shift.startedAt
-            ? new Date(shift.startedAt).toLocaleString(
-                'en-IN', { timeZone: 'Asia/Kolkata' }
-              )
-            : 'Pending';
-
-          const gps = shift.location && Number.isFinite(shift.location.latitude) && Number.isFinite(shift.location.longitude) ? ` · GPS ${shift.location.latitude.toFixed(5)}, ${shift.location.longitude.toFixed(5)} ±${shift.location.accuracy}m` : '';
-          const endGps = shift.endLocation && Number.isFinite(shift.endLocation.latitude) && Number.isFinite(shift.endLocation.longitude) ? ` · End GPS ${shift.endLocation.latitude.toFixed(5)}, ${shift.endLocation.longitude.toFixed(5)} ±${shift.endLocation.accuracy}m` : '';
-          rows.push(makeRow(`${employees[uid]?.name || uid} · ${shift.status} · ${date}${gps}${endGps}`));
-        }
-      }
-
+      const active = Object.values(shiftCache).reduce((count, records) =>
+        count + Object.values(records || {}).filter(shift => shift.status === 'active').length, 0);
       $('activeCount').textContent = active;
-      $('attendanceList').replaceChildren(...rows);
+      renderAttendanceList();
       renderGpsLocations();
       renderWorkerRecords();
     }, error => databaseError(error, 'attendance / shifts')));

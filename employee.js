@@ -393,6 +393,26 @@ $('workerHistoryDate').onchange = showDailyAttendance;
 
 let shiftActive = false;
 let activeShiftId = null;
+let shiftDataOffline = false;
+
+function indiaShiftMinutesNow() {
+  const parts = new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
+  const hour = Number(parts.find(part => part.type === 'hour')?.value);
+  const minute = Number(parts.find(part => part.type === 'minute')?.value);
+  return hour * 60 + minute;
+}
+function employeeShiftHoursOpen() {
+  const minutes = indiaShiftMinutesNow();
+  return minutes >= 480 && minutes < 1140;
+}
+function updateEmployeeShiftControls() {
+  const allowed = employeeShiftHoursOpen() && !shiftDataOffline;
+  if ($('startShift')) $('startShift').disabled = shiftActive || !allowed;
+  if ($('endShift')) $('endShift').disabled = !shiftActive || !allowed;
+  if ($('shiftStatus')) $('shiftStatus').textContent = (shiftActive ? 'On duty' : 'Off duty') +
+    (shiftDataOffline ? ' · Offline copy' : allowed ? '' : ' · Shift actions available 8 AM–7 PM IST');
+}
+setInterval(updateEmployeeShiftControls, 15000);
 let employeeTasks = [];
 let employeeTaskRequests = {};
 const OUTBOX_DB = 'kb-workforce-offline';
@@ -657,13 +677,10 @@ onAuthStateChanged(auth, async user => {
       cacheValue(`shifts:${userId}`, Object.fromEntries(Object.entries(shiftData).map(([id, shift]) => [id, { status: shift.status, startedAt: shift.startedAt, endedAt: shift.endedAt }]))).catch(() => {});
 
       const active = Object.entries(shiftData).filter(([, shift]) => shift.status === 'active').sort((a,b) => (b[1].startedAt || 0) - (a[1].startedAt || 0));
+      shiftDataOffline = false;
       shiftActive = active.length > 0;
       activeShiftId = active[0]?.[0] || null;
-      $('startShift').disabled = shiftActive;
-      $('endShift').disabled = !shiftActive;
-
-      $('shiftStatus').textContent =
-        shiftActive ? 'On duty' : 'Off duty';
+      updateEmployeeShiftControls();
       if (shiftActive && activeShiftId) startGpsTracking();
       else stopGpsTracking();
     }, async () => {
@@ -671,11 +688,10 @@ onAuthStateChanged(auth, async user => {
       workerShifts = cached || {};
       showDailyAttendance();
       const shifts = Object.values(cached || {}).sort((a,b)=>(b.startedAt||0)-(a.startedAt||0));
+      shiftDataOffline = true;
       shiftActive = shifts.some(shift => shift.status === 'active');
       activeShiftId = null;
-      $('startShift').disabled = true;
-      $('endShift').disabled = true;
-      $('shiftStatus').textContent = `${shiftActive ? 'On duty' : 'Off duty'} · offline copy`;
+      updateEmployeeShiftControls();
     });
 
     offCorrections = onValue(ref(db, `attendanceCorrections/${userId}`), snap => {
@@ -760,6 +776,15 @@ onAuthStateChanged(auth, async user => {
 });
 
 $('startShift').onclick = async () => {
+  if (!employeeShiftHoursOpen()) {
+    $('actionError').textContent = 'Employee shift start is available only from 8:00 AM to 7:00 PM India time. Contact an administrator for an exception.';
+    updateEmployeeShiftControls();
+    return;
+  }
+  if (shiftDataOffline) {
+    $('actionError').textContent = 'Connect to the internet before starting a shift so attendance is saved correctly.';
+    return;
+  }
   if (!window.confirm('During your active shift, K&B Management Nexus will collect your location for work attendance and the admin route map. On Android, an ongoing notification remains visible while background tracking is active. Tracking stops when you end your shift. Continue?')) return;
   if (!userId || shiftActive || $('startShift').disabled) return;
   $('startShift').disabled = true;
@@ -771,19 +796,23 @@ $('startShift').onclick = async () => {
     await set(push(ref(db, `shifts/${userId}`)), {
       status: 'active',
       startedAt: serverTimestamp(),
-      endedAt: null,
       ...(location ? { location } : {})
     });
 
   } catch (e) {
     $('actionError').textContent = 'Could not start shift. Check connection and access.';
   } finally {
-    if (!shiftActive) $('startShift').disabled = false;
+    updateEmployeeShiftControls();
   }
 };
 
 $('endShift').onclick = () => {
-  if (!userId || !shiftActive || !activeShiftId) return;
+  if (!employeeShiftHoursOpen()) {
+    $('actionError').textContent = 'Employee shift ending is available only from 8:00 AM to 7:00 PM India time. Active shifts close automatically at 7:00 PM.';
+    updateEmployeeShiftControls();
+    return;
+  }
+  if (shiftDataOffline || !userId || !shiftActive || !activeShiftId) return;
   const button = $('endShift');
   button.disabled = true;
   getOptionalLocation().then(location => update(ref(db, `shifts/${userId}/${activeShiftId}`), {
@@ -795,7 +824,7 @@ $('endShift').onclick = () => {
   }).catch(() => {
     $('actionError').textContent = 'Could not end shift.';
   }).finally(() => {
-    button.disabled = false;
+    updateEmployeeShiftControls();
   });
 };
 
