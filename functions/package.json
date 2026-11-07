@@ -1,0 +1,16 @@
+{
+  "name": "kb-enterprise-os-functions",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.2",
+    "firebase-functions": "^6.0.1"
+  }
+}
