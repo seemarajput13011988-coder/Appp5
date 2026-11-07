@@ -10,7 +10,9 @@
     "build:web": "node scripts/build-web.mjs",
     "desktop:dev": "npm run build:web && electron .",
     "desktop:win": "npm run build:web && electron-builder --win portable",
-    "android:sync": "npm run build:web && cap sync android"
+    "android:sync": "npm run build:web && cap sync android",
+    "validate": "node scripts/validate.mjs && npm run test:functions",
+    "test:functions": "node --test functions/test/*.test.js"
   },
   "devDependencies": {
     "@capacitor/android": "^7.4.3",
